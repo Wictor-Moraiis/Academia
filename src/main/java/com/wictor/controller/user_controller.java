@@ -1,12 +1,20 @@
 package com.wictor.controller;
 
+import com.wictor.model.User;
 import com.wictor.util.AgeValidator;
 import com.wictor.util.CpfValidator;
 import com.wictor.util.EmailValidator;
 import com.wictor.util.NumberValidator;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import java.io.File;
 import java.time.LocalDate;
 
 public class user_controller {
@@ -42,48 +50,85 @@ public class user_controller {
                 validardatanasc();
             }
         });
+        Txt_senha.focusedProperty().addListener((obs, oldValue, newValue) -> {
+            if (!newValue) {
+                Lbl_senha.setVisible(Txt_senha.getText().isBlank());
+            }
+        });
+        Txt_nome.focusedProperty().addListener((obs, oldValue, newValue) -> {
+            if (!newValue) {
+                Lbl_nome.setVisible(Txt_nome.getText().isBlank());
+            }
+        });
+        Txt_cep.focusedProperty().addListener((obs, oldValue, newValue) -> {
+            if (!newValue) {
+                Lbl_cep.setVisible(Txt_cep.getText().isBlank());
+            }
+        });
+        Txt_bairro.focusedProperty().addListener((obs, oldValue, newValue) -> {
+            if (!newValue) {
+                Lbl_bairro.setVisible(Txt_bairro.getText().isBlank());
+            }
+        });
+        Txt_rua.focusedProperty().addListener((obs, oldValue, newValue) -> {
+            if (!newValue) {
+                Lbl_rua.setVisible(Txt_rua.getText().isBlank());
+            }
+        });
+        Txt_num.focusedProperty().addListener((obs, oldValue, newValue) -> {
+            if (!newValue) {
+                Lbl_num.setVisible(Txt_num.getText().isBlank());
+            }
+        });
     }
 
     public void validarcpf() {
         String cpf = Txt_cpf.getText();
-        if (cpf.isBlank()){Lbl_cpf.setVisible(false); return;}
+        if (cpf.isBlank()){Lbl_cpf.setVisible(true); Lbl_cpf.setText("Campo obrigatório"); return;}
         boolean valido = CpfValidator.validar(cpf);
         Lbl_cpf.setVisible(!valido);
+        Lbl_cpf.setText("Cpf inválido!");
+
     }
 
     public void validartel1() {
         String tel1 = Txt_tel1.getText();
-        if (tel1.isBlank()){Lbl_tel1.setVisible(false); return;}
+        if (tel1.isBlank()){Lbl_tel1.setVisible(true); Lbl_tel1.setText("Campo obrigatório"); return;}
         boolean valido = NumberValidator.validar(tel1);
         Lbl_tel1.setVisible(!valido);
+        Lbl_tel1.setText("Telefone inválido!");
     }
 
     public void validartel2() {
         String tel2 = Txt_tel2.getText();
-        if (tel2.isBlank()){Lbl_tel2.setVisible(false); return;}
+        if (tel2.isBlank()){Lbl_tel2.setVisible(true); Lbl_tel2.setText("Campo obrigatório"); return;}
         boolean valido = NumberValidator.validar(tel2);
         Lbl_tel2.setVisible(!valido);
+        Lbl_tel2.setText("Telefone inválido!");
     }
 
     public void validaremail1() {
         String email1 = Txt_email1.getText();
-        if (email1.isBlank()){Lbl_email1.setVisible(false); return;}
+        if (email1.isBlank()){Lbl_email1.setVisible(true); Lbl_tel2.setText("Campo obrigatório"); return;}
         boolean valido = EmailValidator.validar(email1);
         Lbl_email1.setVisible(!valido);
+        Lbl_email1.setText("Email inválido!");
     }
 
     public void validaremail2() {
         String email2 = Txt_email2.getText();
-        if (email2.isBlank()){Lbl_email2.setVisible(false); return;}
+        if (email2.isBlank()){Lbl_email2.setVisible(true); Lbl_email2.setText("Campo obrigatório"); return;}
         boolean valido = EmailValidator.validar(email2);
         Lbl_email2.setVisible(!valido);
+        Lbl_email2.setText("Email inválido!");
     }
 
     public void validardatanasc() {
         LocalDate datanasc = Dt_datanasc.getValue();
-        if (datanasc == null){Lbl_datanasc.setVisible(false); return;}
+        if (datanasc == null){Lbl_datanasc.setVisible(true); Lbl_datanasc.setText("Campo obrigatório"); return;}
         boolean valido = AgeValidator.validar(datanasc);
         Lbl_datanasc.setVisible(!valido);
+        Lbl_datanasc.setText("Data de nascimento inválida!");
     }
 
 
@@ -134,36 +179,77 @@ public class user_controller {
     @FXML
     private Label Lbl_datanasc;
     @FXML
+    private Label Lbl_senha;
+    @FXML
+    private Label Lbl_nome;
+    @FXML
+    private Label Lbl_cep;
+    @FXML
+    private Label Lbl_bairro;
+    @FXML
+    private Label Lbl_rua;
+    @FXML
+    private Label Lbl_num;
+    @FXML
+    private Label Lbl_sexo;
+    @FXML
     private ToggleGroup Group_sexo;
+    @FXML
+    private ImageView ImgV_foto;
+    private File foto;
 
     @FXML
     public void onBtn_cad_Click() {
-        boolean preenchido = preencimento();
-        if (!preenchido) {
 
-            Lbl_cpf.setVisible(true);
-
-        }else{
-            Lbl_cpf.setVisible(false);
-        }
+        if(!preencimento())return;
+        String sexo;
+        User user = new User();
+        user.setCpf(Txt_cpf.getText());
+        user.setSenha(Txt_senha.getText());
+        user.setNome(Txt_nome.getText());
+        user.setDatanasc(Dt_datanasc.getValue());
+        user.setEmail1(Txt_email1.getText());
+        user.setEmail2(Txt_email2.getText());
+        user.setTel1(Txt_tel1.getText());
+        user.setTel2(Txt_tel2.getText());
+        user.setCep(Txt_cep.getText());
+        user.setBairro(Txt_bairro.getText());
+        user.setRua(Txt_rua.getText());
+        user.setNum(Txt_num.getText());
+        user.setComp(Txt_comp.getText());
+        if(RadB_masculino.isSelected()){ sexo = "M";}else{sexo = "F";}
+        user.setSexo(sexo);
 
     }
 
+    @FXML
+    public void onBtn_img_Click() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Imagens", "*.png", "*.jpg", "*.jpeg")
+        );
+        Stage stage = (Stage) Btn_img.getScene().getWindow();
+        File file = fileChooser.showOpenDialog(stage);
+        if (file != null) {
+            foto = file;
+            Image image = new Image(file.toURI().toString());
+            ImgV_foto.setImage(image);
+        }
+    }
+
     public boolean preencimento(){
-        if (Txt_cpf.getText().isBlank()) return false;
-        if (Txt_senha.getText().isBlank()) return false;
-        if (Txt_nome.getText().isBlank()) return false;
-        if (Txt_email1.getText().isBlank()) return false;
-        if (Txt_tel1.getText().isBlank()) return false;
-        if (Txt_cep.getText().isBlank()) return false;
-        if (Txt_bairro.getText().isBlank()) return false;
-        if (Txt_rua.getText().isBlank()) return false;
-        if (Txt_num.getText().isBlank()) return false;
-        if (Dt_datanasc.getValue() == null) return false;
-        if (Group_sexo.getSelectedToggle() == null) return false;
-
+        if (Txt_cpf.getText().isBlank()){ Lbl_cpf.setText("Campo obrigatório"); Lbl_cpf.setVisible(true); return false;}
+        if (Txt_senha.getText().isBlank()){ Lbl_senha.setVisible(true); return false;}
+        if (Txt_nome.getText().isBlank()){ Lbl_nome.setVisible(true); return false;}
+        if (Txt_email1.getText().isBlank()){ Lbl_email1.setText("Campo obrigatório"); Lbl_email1.setVisible(true); return false;}
+        if (Txt_tel1.getText().isBlank()){ Lbl_email2.setText("Campo obrigatório"); Lbl_email2.setVisible(true); return false;}
+        if (Txt_cep.getText().isBlank()){ Lbl_cep.setVisible(true); return false;}
+        if (Txt_bairro.getText().isBlank()){ Lbl_bairro.setVisible(true); return false;}
+        if (Txt_rua.getText().isBlank()){ Lbl_rua.setVisible(true); return false;}
+        if (Txt_num.getText().isBlank()){ Lbl_num.setVisible(true); return false;}
+        if (Dt_datanasc.getValue() == null){ Lbl_datanasc.setText("Campo obrigatório"); Lbl_datanasc.setVisible(true); return false;}
+        if (Group_sexo.getSelectedToggle() == null){ Lbl_sexo.setVisible(true); return false;}
         return true;
-
     }
 
 
