@@ -13,6 +13,11 @@ public class CpfValidator {
 
         cpf = cpf.replaceAll("[^0-9]", "");
         int[] digitos = new int[11];
+
+        if (cpf.length() != 11){
+            return false;
+        }
+
         for (int i = 0; i < 11; i++) {
 
             digitos[i] = cpf.charAt(i) - '0';
