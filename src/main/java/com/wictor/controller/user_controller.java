@@ -5,6 +5,8 @@ import com.wictor.util.AgeValidator;
 import com.wictor.util.CpfValidator;
 import com.wictor.util.EmailValidator;
 import com.wictor.util.NumberValidator;
+import com.wictor.Security.PasswordService;
+import com.wictor.Security.CpfService;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
@@ -131,7 +133,6 @@ public class user_controller {
         Lbl_datanasc.setText("Data de nascimento inválida!");
     }
 
-
     @FXML
     private TextField Txt_cpf;
     @FXML
@@ -204,8 +205,12 @@ public class user_controller {
         if(!preencimento())return;
         String sexo;
         User user = new User();
-        user.setCpf(Txt_cpf.getText());
-        user.setSenha(Txt_senha.getText());
+        String Cpf = Txt_cpf.getText();
+        String Cpf_crpit = CpfService.Criptografia(Cpf);
+        user.setCpf(Cpf_crpit);
+        String Senha = Txt_senha.getText();
+        String hash = PasswordService.Criptografia(Senha);
+        user.setSenha(hash);
         user.setNome(Txt_nome.getText());
         user.setDatanasc(Dt_datanasc.getValue());
         user.setEmail1(Txt_email1.getText());
