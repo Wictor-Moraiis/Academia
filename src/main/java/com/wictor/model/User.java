@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 public class User {
 
+    private int id;
     private String cpf;
     private String senha;
     private LocalDate datanasc;
@@ -18,14 +19,19 @@ public class User {
     private String num;
     private String comp;
     private String sexo;
+    private Boolean Ativo;
+
+    public int getid() {
+        return id;
+    }
+
+    public void setid(int id) {this.id = id;}
 
     public String getCpf() {
         return cpf;
     }
 
-    public void setCpf(String cpf) {
-        this.cpf = cpf;
-    }
+    public void setCpf(String cpf) {this.cpf = cpf;}
 
     public String getSenha() {
         return senha;
@@ -129,5 +135,13 @@ public class User {
 
     public void setSexo(String sexo) {
         this.sexo = sexo;
+    }
+
+    public boolean getAtivo() {
+        return Ativo;
+    }
+
+    public void setAtivo(boolean Ativo) {
+        this.Ativo = Ativo;
     }
 }

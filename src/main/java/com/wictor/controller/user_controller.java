@@ -1,5 +1,6 @@
 package com.wictor.controller;
 
+import com.wictor.dao.UserDao;
 import com.wictor.model.User;
 import com.wictor.util.AgeValidator;
 import com.wictor.util.CpfValidator;
@@ -16,6 +17,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
 import java.io.File;
 import java.time.LocalDate;
 
@@ -86,7 +88,11 @@ public class user_controller {
 
     public void validarcpf() {
         String cpf = Txt_cpf.getText();
-        if (cpf.isBlank()){Lbl_cpf.setVisible(true); Lbl_cpf.setText("Campo obrigatório"); return;}
+        if (cpf.isBlank()) {
+            Lbl_cpf.setVisible(true);
+            Lbl_cpf.setText("Campo obrigatório");
+            return;
+        }
         boolean valido = CpfValidator.validar(cpf);
         Lbl_cpf.setVisible(!valido);
         Lbl_cpf.setText("Cpf inválido!");
@@ -95,7 +101,11 @@ public class user_controller {
 
     public void validartel1() {
         String tel1 = Txt_tel1.getText();
-        if (tel1.isBlank()){Lbl_tel1.setVisible(true); Lbl_tel1.setText("Campo obrigatório"); return;}
+        if (tel1.isBlank()) {
+            Lbl_tel1.setVisible(true);
+            Lbl_tel1.setText("Campo obrigatório");
+            return;
+        }
         boolean valido = NumberValidator.validar(tel1);
         Lbl_tel1.setVisible(!valido);
         Lbl_tel1.setText("Telefone inválido!");
@@ -103,7 +113,9 @@ public class user_controller {
 
     public void validartel2() {
         String tel2 = Txt_tel2.getText();
-        if (tel2.isBlank()){Lbl_tel2.setVisible(true); Lbl_tel2.setText("Campo obrigatório"); return;}
+        if (tel2.isBlank()) {
+            return;
+        }
         boolean valido = NumberValidator.validar(tel2);
         Lbl_tel2.setVisible(!valido);
         Lbl_tel2.setText("Telefone inválido!");
@@ -111,7 +123,11 @@ public class user_controller {
 
     public void validaremail1() {
         String email1 = Txt_email1.getText();
-        if (email1.isBlank()){Lbl_email1.setVisible(true); Lbl_tel2.setText("Campo obrigatório"); return;}
+        if (email1.isBlank()) {
+            Lbl_email1.setVisible(true);
+            Lbl_tel2.setText("Campo obrigatório");
+            return;
+        }
         boolean valido = EmailValidator.validar(email1);
         Lbl_email1.setVisible(!valido);
         Lbl_email1.setText("Email inválido!");
@@ -119,7 +135,9 @@ public class user_controller {
 
     public void validaremail2() {
         String email2 = Txt_email2.getText();
-        if (email2.isBlank()){Lbl_email2.setVisible(true); Lbl_email2.setText("Campo obrigatório"); return;}
+        if (email2.isBlank()) {
+            return;
+        }
         boolean valido = EmailValidator.validar(email2);
         Lbl_email2.setVisible(!valido);
         Lbl_email2.setText("Email inválido!");
@@ -127,7 +145,11 @@ public class user_controller {
 
     public void validardatanasc() {
         LocalDate datanasc = Dt_datanasc.getValue();
-        if (datanasc == null){Lbl_datanasc.setVisible(true); Lbl_datanasc.setText("Campo obrigatório"); return;}
+        if (datanasc == null) {
+            Lbl_datanasc.setVisible(true);
+            Lbl_datanasc.setText("Campo obrigatório");
+            return;
+        }
         boolean valido = AgeValidator.validar(datanasc);
         Lbl_datanasc.setVisible(!valido);
         Lbl_datanasc.setText("Data de nascimento inválida!");
@@ -202,7 +224,7 @@ public class user_controller {
     @FXML
     public void onBtn_cad_Click() {
 
-        if(!preencimento())return;
+        if (!preencimento()) return;
         String sexo;
         User user = new User();
         String Cpf = Txt_cpf.getText();
@@ -222,8 +244,22 @@ public class user_controller {
         user.setRua(Txt_rua.getText());
         user.setNum(Txt_num.getText());
         user.setComp(Txt_comp.getText());
-        if(RadB_masculino.isSelected()){ sexo = "M";}else{sexo = "F";}
+        user.setAtivo(true);
+        if (RadB_masculino.isSelected()) {
+            sexo = "M";
+        } else {
+            sexo = "F";
+        }
         user.setSexo(sexo);
+        try {
+            UserDao dao = new UserDao();
+            int idGerado = dao.insert(user);
+            user.setid(idGerado);
+            mostrarAlertCerto();
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlertErro();
+        }
 
     }
 
@@ -242,19 +278,72 @@ public class user_controller {
         }
     }
 
-    public boolean preencimento(){
-        if (Txt_cpf.getText().isBlank()){ Lbl_cpf.setText("Campo obrigatório"); Lbl_cpf.setVisible(true); return false;}
-        if (Txt_senha.getText().isBlank()){ Lbl_senha.setVisible(true); return false;}
-        if (Txt_nome.getText().isBlank()){ Lbl_nome.setVisible(true); return false;}
-        if (Txt_email1.getText().isBlank()){ Lbl_email1.setText("Campo obrigatório"); Lbl_email1.setVisible(true); return false;}
-        if (Txt_tel1.getText().isBlank()){ Lbl_email2.setText("Campo obrigatório"); Lbl_email2.setVisible(true); return false;}
-        if (Txt_cep.getText().isBlank()){ Lbl_cep.setVisible(true); return false;}
-        if (Txt_bairro.getText().isBlank()){ Lbl_bairro.setVisible(true); return false;}
-        if (Txt_rua.getText().isBlank()){ Lbl_rua.setVisible(true); return false;}
-        if (Txt_num.getText().isBlank()){ Lbl_num.setVisible(true); return false;}
-        if (Dt_datanasc.getValue() == null){ Lbl_datanasc.setText("Campo obrigatório"); Lbl_datanasc.setVisible(true); return false;}
-        if (Group_sexo.getSelectedToggle() == null){ Lbl_sexo.setVisible(true); return false;}
+    public boolean preencimento() {
+        if (Txt_cpf.getText().isBlank()) {
+            Lbl_cpf.setText("Campo obrigatório");
+            Lbl_cpf.setVisible(true);
+            return false;
+        }
+        if (Txt_senha.getText().isBlank()) {
+            Lbl_senha.setVisible(true);
+            return false;
+        }
+        if (Txt_nome.getText().isBlank()) {
+            Lbl_nome.setVisible(true);
+            return false;
+        }
+        if (Txt_email1.getText().isBlank()) {
+            Lbl_email1.setText("Campo obrigatório");
+            Lbl_email1.setVisible(true);
+            return false;
+        }
+        if (Txt_tel1.getText().isBlank()) {
+            Lbl_tel1.setText("Campo obrigatório");
+            Lbl_tel1.setVisible(true);
+            return false;
+        }
+        if (Txt_cep.getText().isBlank()) {
+            Lbl_cep.setVisible(true);
+            return false;
+        }
+        if (Txt_bairro.getText().isBlank()) {
+            Lbl_bairro.setVisible(true);
+            return false;
+        }
+        if (Txt_rua.getText().isBlank()) {
+            Lbl_rua.setVisible(true);
+            return false;
+        }
+        if (Txt_num.getText().isBlank()) {
+            Lbl_num.setVisible(true);
+            return false;
+        }
+        if (Dt_datanasc.getValue() == null) {
+            Lbl_datanasc.setText("Campo obrigatório");
+            Lbl_datanasc.setVisible(true);
+            return false;
+        }
+        if (Group_sexo.getSelectedToggle() == null) {
+            Lbl_sexo.setVisible(true);
+            return false;
+        }
         return true;
+    }
+
+    public void mostrarAlertCerto(){
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Sucesso");
+        alert.setHeaderText(null);
+        alert.setContentText("Usuário cadastrado com sucesso!");
+        alert.showAndWait();
+    }
+
+    public void mostrarAlertErro(){
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Erro");
+        alert.setHeaderText("Falha no cadastro");
+        alert.setContentText("Não foi possível cadastrar o usuário.");
+        alert.showAndWait();
     }
 
 
