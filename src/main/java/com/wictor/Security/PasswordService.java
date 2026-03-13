@@ -20,6 +20,13 @@ public class PasswordService {
         return argon2.hash(iterations, memory, parallelism, Senha_Pepper);
     }
 
+    public static boolean verificarSenha(String senhaDigitada, String hashArmazenado) {
+        String senhaPepper = senhaDigitada + pepper;
+        Argon2 argon2 = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id);
+
+        return argon2.verify(hashArmazenado, senhaPepper);
+    }
+
 
 
 }

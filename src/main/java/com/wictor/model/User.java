@@ -25,7 +25,7 @@ public class User {
         return id;
     }
 
-    public void setid(int id) {this.id = id;}
+    public void setId(int id) {this.id = id;}
 
     public String getCpf() {
         return cpf;

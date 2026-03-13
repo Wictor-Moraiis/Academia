@@ -17,7 +17,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-
 import java.io.File;
 import java.time.LocalDate;
 
@@ -226,35 +225,35 @@ public class user_controller {
 
         if (!preencimento()) return;
         String sexo;
-        User user = new User();
+        User cadUser = new User();
         String Cpf = Txt_cpf.getText();
         String Cpf_crpit = CpfService.Criptografia(Cpf);
-        user.setCpf(Cpf_crpit);
+        cadUser.setCpf(Cpf_crpit);
         String Senha = Txt_senha.getText();
         String hash = PasswordService.Criptografia(Senha);
-        user.setSenha(hash);
-        user.setNome(Txt_nome.getText());
-        user.setDatanasc(Dt_datanasc.getValue());
-        user.setEmail1(Txt_email1.getText());
-        user.setEmail2(Txt_email2.getText());
-        user.setTel1(Txt_tel1.getText());
-        user.setTel2(Txt_tel2.getText());
-        user.setCep(Txt_cep.getText());
-        user.setBairro(Txt_bairro.getText());
-        user.setRua(Txt_rua.getText());
-        user.setNum(Txt_num.getText());
-        user.setComp(Txt_comp.getText());
-        user.setAtivo(true);
+        cadUser.setSenha(hash);
+        cadUser.setNome(Txt_nome.getText());
+        cadUser.setDatanasc(Dt_datanasc.getValue());
+        cadUser.setEmail1(Txt_email1.getText());
+        cadUser.setEmail2(Txt_email2.getText());
+        cadUser.setTel1(Txt_tel1.getText());
+        cadUser.setTel2(Txt_tel2.getText());
+        cadUser.setCep(Txt_cep.getText());
+        cadUser.setBairro(Txt_bairro.getText());
+        cadUser.setRua(Txt_rua.getText());
+        cadUser.setNum(Txt_num.getText());
+        cadUser.setComp(Txt_comp.getText());
+        cadUser.setAtivo(true);
         if (RadB_masculino.isSelected()) {
             sexo = "M";
         } else {
             sexo = "F";
         }
-        user.setSexo(sexo);
+        cadUser.setSexo(sexo);
         try {
             UserDao dao = new UserDao();
-            int idGerado = dao.insert(user);
-            user.setid(idGerado);
+            int idGerado = dao.insert(cadUser);
+            cadUser.setId(idGerado);
             mostrarAlertCerto();
         } catch (Exception e) {
             e.printStackTrace();
