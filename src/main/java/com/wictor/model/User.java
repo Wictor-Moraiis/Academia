@@ -1,147 +1,73 @@
 package com.wictor.model;
 
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.Builder;
+import lombok.AllArgsConstructor;
 import java.time.LocalDate;
+
+@Entity
+@Table(name = "User")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 
 public class User {
 
-    private int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "User_id")
+    private Long id;
+
+    @Column(name = "User_cpf", nullable = false, unique = true)
     private String cpf;
+
+    @Column(name = "User_senha", nullable = false)
     private String senha;
-    private LocalDate datanasc;
+
+    @Column(name = "User_nome", nullable = false)
     private String nome;
+
+    @Column(name = "User_email1", nullable = false, unique = true)
     private String email1;
+
+    @Column(name = "User_email2")
     private String email2;
+
+    @Column(name = "User_tel1", nullable = false, unique = true)
     private String tel1;
+
+    @Column(name = "User_tel2")
     private String tel2;
-    private String cep;
-    private String bairro;
-    private String rua;
-    private String num;
-    private String comp;
+
+    @Column(name = "User_sexo", nullable = false, length = 1)
     private String sexo;
-    private Boolean Ativo;
 
-    public int getid() {
-        return id;
-    }
+    @Column(name = "User_cep", nullable = false, length = 8)
+    private String cep;
 
-    public void setId(int id) {this.id = id;}
+    @Column(name = "User_bairro", nullable = false)
+    private String bairro;
 
-    public String getCpf() {
-        return cpf;
-    }
+    @Column(name = "User_rua", nullable = false)
+    private String rua;
 
-    public void setCpf(String cpf) {this.cpf = cpf;}
+    @Column(name = "User_numcasa", nullable = false)
+    private String num;
 
-    public String getSenha() {
-        return senha;
-    }
+    @Column(name = "User_comp")
+    private String comp;
 
-    public void setSenha(String senha) {
-        this.senha = senha;
-    }
+    @Column(name = "User_foto")
+    private String foto;
 
-    public String getNome() {
-        return nome;
-    }
+    @Column(name = "User_datanasc", nullable = false)
+    private LocalDate dataNasc;
 
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public LocalDate getDatanasc() {
-        return datanasc;
-    }
-
-    public void setDatanasc(LocalDate datanasc) {
-        this.datanasc = datanasc;
-    }
-
-    public String getEmail1() {
-        return email1;
-    }
-
-    public void setEmail1(String email1) {
-        this.email1 = email1;
-    }
-
-    public String getEmail2() {
-        return email2;
-    }
-
-    public void setEmail2(String email2) {
-        this.email2 = email2;
-    }
-
-    public String getTel1() {
-        return tel1;
-    }
-
-    public void setTel1(String tel1) {
-        this.tel1 = tel1;
-    }
-
-    public String getTel2() {
-        return tel2;
-    }
-
-    public void setTel2(String tel2) {
-        this.tel2 = tel2;
-    }
-
-    public String getCep() {
-        return cep;
-    }
-
-    public void setCep(String cep) {
-        this.cep = cep;
-    }
-
-    public String getBairro() {
-        return bairro;
-    }
-
-    public void setBairro(String bairro) {
-        this.bairro = bairro;
-    }
-
-    public String getRua() {
-        return rua;
-    }
-
-    public void setRua(String rua) {
-        this.rua = rua;
-    }
-
-    public String getNum() {
-        return num;
-    }
-
-    public void setNum(String num) {
-        this.num = num;
-    }
-
-    public String getComp() {
-        return comp;
-    }
-
-    public void setComp(String comp) {
-        this.comp = comp;
-    }
-
-    public String getSexo() {
-        return sexo;
-    }
-
-    public void setSexo(String sexo) {
-        this.sexo = sexo;
-    }
-
-    public boolean getAtivo() {
-        return Ativo;
-    }
-
-    public void setAtivo(boolean Ativo) {
-        this.Ativo = Ativo;
-    }
+    @Column(name = "User_ativo", nullable = false)
+    private boolean ativo;
 }
