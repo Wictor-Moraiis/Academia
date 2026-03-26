@@ -21,7 +21,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "User_id")
-    private Long id;
+    private Integer id;
 
     @Column(name = "User_cpf", nullable = false, unique = true)
     private String cpf;
@@ -66,7 +66,7 @@ public class User {
     private String foto;
 
     @Column(name = "User_datanasc", nullable = false)
-    private LocalDate dataNasc;
+    private LocalDate datanasc;
 
     @Column(name = "User_ativo", nullable = false)
     private boolean ativo;

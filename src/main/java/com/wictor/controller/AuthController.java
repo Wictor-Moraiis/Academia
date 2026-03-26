@@ -1,6 +1,6 @@
 package com.wictor.controller;
 
-import com.wictor.dto.Logindto;
+import com.wictor.Dto.LoginDto;
 import com.wictor.model.User;
 import com.wictor.service.UserService;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +17,9 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Logindto dto) {
+    public ResponseEntity<?> login(@RequestBody LoginDto dto) {
 
-        User usuario = userService.autenticar(dto.getCpf(), dto.getSenha());
+        User usuario = userService.autenticar(dto.cpf(), dto.senha());
 
         if (usuario != null) {
             return ResponseEntity.ok("Login efetuado com sucesso");
