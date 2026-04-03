@@ -15,6 +15,8 @@ public class CpfService {
 
             cipher.init(Cipher.ENCRYPT_MODE, getKey());
 
+            Cpf = Cpf.replaceAll("[^0-9]", "");
+
             byte[] Cpf_cript = cipher.doFinal(Cpf.getBytes(StandardCharsets.UTF_8));
 
             return Base64.getEncoder().encodeToString(Cpf_cript);

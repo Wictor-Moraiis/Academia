@@ -1,5 +1,7 @@
 package com.wictor.model;
 
+import com.wictor.enums.Role;
+import com.wictor.enums.Tipo;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -67,6 +69,14 @@ public class User {
 
     @Column(name = "User_datanasc", nullable = false)
     private LocalDate datanasc;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "User_rule")
+    private Role role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "User_tipo")
+    private Tipo tipo;
 
     @Column(name = "User_ativo", nullable = false)
     private boolean ativo;
