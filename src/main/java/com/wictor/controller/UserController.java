@@ -1,5 +1,6 @@
 package com.wictor.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wictor.Dto.LoginDto;
 import com.wictor.Dto.UserDto;
 import com.wictor.Dto.UserRoleUpdateDto;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -30,21 +32,35 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping("/users")
-    public ResponseEntity<?> cadastrar(@RequestBody UserDto dto,
-                                       @AuthenticationPrincipal User logado) {
+    @PostMapping(value = "/users", consumes = "multipart/form-data")
+    public ResponseEntity<?> cadastrar(
+            @RequestParam("dados") String dadosJson,
+            @RequestPart(value = "foto", required = false) MultipartFile foto,
+            @AuthenticationPrincipal User logado) {
 
         if (logado == null || !logado.getRole().equals(Role.ADMIN)) {
             throw new UnauthorizedException("Sem permissão");
         }
 
-        User novo = userService.cadastrar(dto, true);
+        ObjectMapper mapper = new ObjectMapper();
+        UserDto dto;
+
+        try {
+            dto = mapper.readValue(dadosJson, UserDto.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao converter JSON");
+        }
+
+        User novo = userService.cadastrar(dto,foto, true);
         return ResponseEntity.status(201).body(novo);
     }
 
-    @PostMapping("/autocadastro")
-    public ResponseEntity<?> cadastrarAluno(@RequestBody UserDto dto) {
-        User novo = userService.cadastrar(dto, false);
+    @PostMapping(value = "/autocadastro", consumes = "multipart/form-data")
+    public ResponseEntity<?> cadastrarAluno(
+            @RequestPart("dados") UserDto dto,
+            @RequestPart(value = "foto", required = false) MultipartFile foto) {
+
+        User novo = userService.cadastrar(dto, foto, false);
         return ResponseEntity.status(201).body(novo);
     }
 
@@ -57,15 +73,16 @@ public class UserController {
         return ResponseEntity.ok(Map.of("token", token, "id", user.getId()));
     }
 
-    @PatchMapping("/users/{id}")
+    @PatchMapping(value = "/users/{id}", consumes = "multipart/form-data")
     public ResponseEntity<?> atualizar(@PathVariable Long id,
-                                       @RequestBody UserUpdateDto dto,
+                                       @RequestPart("dados") UserUpdateDto dto,
+                                       @RequestPart(value = "foto", required = false) MultipartFile foto,
                                        @AuthenticationPrincipal User logado) {
 
         if (!logado.getRole().equals(Role.ADMIN) && logado.getId().longValue() != id.longValue()) {
             throw new RegraException("Sem permissão");
         }
-        User user = userService.atualizar(id, dto);
+        User user = userService.atualizar(id, dto, foto);
         return ResponseEntity.ok(user);
     }
 

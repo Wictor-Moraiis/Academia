@@ -7,17 +7,22 @@ import com.wictor.Security.PasswordService;
 import com.wictor.Security.CpfService;
 import com.wictor.enums.Role;
 import com.wictor.enums.Tipo;
-import com.wictor.exception.ConflitoException;
-import com.wictor.exception.NotFoundException;
-import com.wictor.exception.RegraException;
+import com.wictor.exception.*;
 import com.wictor.model.User;
 import com.wictor.repository.UserRepository;
 import com.wictor.util.AgeValidator;
 import com.wictor.util.CpfValidator;
 import com.wictor.util.NumberValidator;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Service
 public class UserService {
@@ -27,6 +32,10 @@ public class UserService {
     public UserService(UserRepository repository) {
         this.repository = repository;
     }
+
+    @Value("${file.upload-dir}")
+    private String uploadDir;
+    int maximumSizeMB = 5000000;
 
 
     @Bean
@@ -57,11 +66,14 @@ public class UserService {
             }
         };
     }
-    public User cadastrar(UserDto userDTO, boolean isAdminRequest) {
+
+    public User cadastrar(UserDto userDTO, MultipartFile foto, boolean isAdminRequest) {
 
         String cpfCript = CpfService.Criptografia(userDTO.cpf());
         String tel1 = NumberValidator.limpar(userDTO.tel1());
         String tel2 = NumberValidator.limpar(userDTO.tel2());
+
+
         if (repository.existsByCpf(cpfCript)) {
             throw new ConflitoException("CPF já cadastrado");
         }
@@ -77,6 +89,7 @@ public class UserService {
         if (!AgeValidator.validar(userDTO.datanasc())) {
             throw new ConflitoException("Data de nascimento inválida");
         }
+
         String cepp = userDTO.cep().replaceAll("[^0-9]", "");
         String hash = PasswordService.Criptografia(userDTO.senha());
 
@@ -105,8 +118,34 @@ public class UserService {
         }
         User user = builder.build();
 
+        User savedUser = repository.save(user);
+        Integer lastId = savedUser.getId();
 
-        return repository.save(user);
+        if (foto != null && !foto.isEmpty()) {
+            String tipo = foto.getContentType();
+
+            if (tipo == null || !tipo.startsWith("image/")) {
+                throw new InvalidImageException("Arquivo não é uma imagem válida");
+            }
+
+            if (foto.getSize() > maximumSizeMB) {
+                throw new SizeException("A imagem é muito grande. Tamanho máximo é de 5 MB");
+            }
+
+            String newName = "user_" + lastId + ".png";
+            byte[] fotoBytes;
+            Path basePath = Paths.get(uploadDir);
+            Path finalPath = basePath.resolve(newName);
+            try {
+                fotoBytes = foto.getBytes();
+                Files.write(finalPath, fotoBytes);
+            } catch (IOException e) {
+                throw new InternalErrorException("Erro ao salvar imagem");
+            }
+            savedUser.setFoto("User_img/" + newName);
+            repository.save(savedUser);
+        }
+        return savedUser;
     }
 
     public User autenticar(String cpf, String senhaDigitada) {
@@ -132,7 +171,7 @@ public class UserService {
         return user;
     }
 
-    public User atualizar(Long id, UserUpdateDto dto){
+    public User atualizar(Long id, UserUpdateDto dto, MultipartFile foto) {
         User user = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
 
@@ -219,11 +258,35 @@ public class UserService {
             }
             user.setDatanasc(dto.datanasc());
         }
+
+        if (foto != null && !foto.isEmpty()) {
+            String tipo = foto.getContentType();
+
+            if (tipo == null || !tipo.startsWith("image/")) {
+                throw new InvalidImageException("Arquivo não é uma imagem válida");
+            }
+
+            if (foto.getSize() > maximumSizeMB) {
+                throw new SizeException("A imagem é muito grande. Tamanho máximo é de 5 MB");
+            }
+
+            String newName = "user_" + user.getId() + ".png";
+            byte[] fotoBytes;
+            Path basePath = Paths.get(uploadDir);
+            Path finalPath = basePath.resolve(newName);
+            try {
+                fotoBytes = foto.getBytes();
+                Files.write(finalPath, fotoBytes);
+            } catch (IOException e) {
+                throw new InternalErrorException("Erro ao salvar imagem");
+            }
+            user.setFoto("User_img/" + newName);
+        }
         return repository.save(user);
 
     }
 
-    public User atualizarRole(Long id, UserRoleUpdateDto dto){
+    public User atualizarRole(Long id, UserRoleUpdateDto dto) {
         User user = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
 
@@ -265,6 +328,15 @@ public class UserService {
 
         User user = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
+        if (user.getFoto() != null) {
+            try {
+                Path path = Paths.get(user.getFoto());
+                Files.deleteIfExists(path);
+
+            } catch (IOException e) {
+                System.err.println("Failed to delete the file: " + e.getMessage());
+            }
+        }
 
         repository.deleteById(id);
     }

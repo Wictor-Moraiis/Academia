@@ -37,5 +37,26 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(SizeException.class)
+    public ResponseEntity<?> handleSize(SizeException ex) {
+        return ResponseEntity.status(413).body(
+                Map.of("erro", ex.getMessage())
+        );
+    }
+
+    @ExceptionHandler(InvalidImageException.class)
+    public ResponseEntity<?> handleInvalidImage(InvalidImageException ex) {
+        return ResponseEntity.status(422).body(
+                Map.of("erro", ex.getMessage())
+        );
+    }
+
+    @ExceptionHandler(InternalErrorException.class)
+    public ResponseEntity<?> handleInternalError(InternalErrorException ex) {
+        return ResponseEntity.status(500).body(
+                Map.of("erro", ex.getMessage())
+        );
+    }
+
 
 }
