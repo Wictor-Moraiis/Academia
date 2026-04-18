@@ -1,4 +1,4 @@
-package com.wictor.service;
+package com.wictor.Service;
 
 import com.wictor.Dto.UserDto;
 import com.wictor.Dto.UserRoleUpdateDto;
@@ -18,7 +18,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -67,7 +66,7 @@ public class UserService {
         };
     }
 
-    public User cadastrar(UserDto userDTO, MultipartFile foto, boolean isAdminRequest) {
+    public User cadastrar(UserDto userDTO, MultipartFile foto, User logado) {
 
         String cpfCript = CpfService.Criptografia(userDTO.cpf());
         String tel1 = NumberValidator.limpar(userDTO.tel1());
@@ -109,7 +108,8 @@ public class UserService {
                 .comp(userDTO.comp())
                 .datanasc(userDTO.datanasc())
                 .ativo(true);
-        if (isAdminRequest) {
+        boolean isAdmin = logado != null && logado.getRole().equals(Role.ADMIN);
+        if (isAdmin) {
             builder.role(userDTO.role());
             builder.tipo(userDTO.tipo());
         } else {
@@ -171,7 +171,7 @@ public class UserService {
         return user;
     }
 
-    public User atualizar(Long id, UserUpdateDto dto, MultipartFile foto) {
+    public User atualizar(Integer id, UserUpdateDto dto, MultipartFile foto) {
         User user = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
 
@@ -286,7 +286,7 @@ public class UserService {
 
     }
 
-    public User atualizarRole(Long id, UserRoleUpdateDto dto) {
+    public User atualizarRole(Integer id, UserRoleUpdateDto dto) {
         User user = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
 
@@ -304,7 +304,7 @@ public class UserService {
         return repository.save(user);
     }
 
-    public void desativar(long id) {
+    public void desativar(Integer id) {
 
         User user = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
@@ -314,7 +314,7 @@ public class UserService {
         repository.save(user);
     }
 
-    public void reativar(long id) {
+    public void reativar(Integer id) {
 
         User user = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
@@ -324,7 +324,7 @@ public class UserService {
         repository.save(user);
     }
 
-    public void deletar(long id) {
+    public void deletar(Integer id) {
 
         User user = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));

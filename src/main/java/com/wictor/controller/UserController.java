@@ -1,22 +1,20 @@
 package com.wictor.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wictor.Dto.LoginDto;
 import com.wictor.Dto.UserDto;
 import com.wictor.Dto.UserRoleUpdateDto;
 import com.wictor.Dto.UserUpdateDto;
 import com.wictor.Security.JwtService;
-import com.wictor.enums.Role;
-import com.wictor.exception.RegraException;
 import com.wictor.exception.UnauthorizedException;
 import com.wictor.model.User;
-import com.wictor.service.UserService;
+import com.wictor.Service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.Map;
 
 @RestController
@@ -34,33 +32,12 @@ public class UserController {
 
     @PostMapping(value = "/users", consumes = "multipart/form-data")
     public ResponseEntity<?> cadastrar(
-            @RequestParam("dados") String dadosJson,
+            @RequestPart("dados") @Valid UserDto dto,
             @RequestPart(value = "foto", required = false) MultipartFile foto,
             @AuthenticationPrincipal User logado) {
 
-        if (logado == null || !logado.getRole().equals(Role.ADMIN)) {
-            throw new UnauthorizedException("Sem permissão");
-        }
+        User novo = userService.cadastrar(dto, foto, logado);
 
-        ObjectMapper mapper = new ObjectMapper();
-        UserDto dto;
-
-        try {
-            dto = mapper.readValue(dadosJson, UserDto.class);
-        } catch (Exception e) {
-            throw new RuntimeException("Erro ao converter JSON");
-        }
-
-        User novo = userService.cadastrar(dto,foto, true);
-        return ResponseEntity.status(201).body(novo);
-    }
-
-    @PostMapping(value = "/autocadastro", consumes = "multipart/form-data")
-    public ResponseEntity<?> cadastrarAluno(
-            @RequestPart("dados") UserDto dto,
-            @RequestPart(value = "foto", required = false) MultipartFile foto) {
-
-        User novo = userService.cadastrar(dto, foto, false);
         return ResponseEntity.status(201).body(novo);
     }
 
@@ -73,64 +50,46 @@ public class UserController {
         return ResponseEntity.ok(Map.of("token", token, "id", user.getId()));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
     @PatchMapping(value = "/users/{id}", consumes = "multipart/form-data")
-    public ResponseEntity<?> atualizar(@PathVariable Long id,
-                                       @RequestPart("dados") UserUpdateDto dto,
-                                       @RequestPart(value = "foto", required = false) MultipartFile foto,
-                                       @AuthenticationPrincipal User logado) {
+    public ResponseEntity<?> atualizar(@PathVariable Integer id,
+                                       @RequestPart("dados") @Valid UserUpdateDto dto,
+                                       @RequestPart(value = "foto", required = false) MultipartFile foto) {
 
-        if (!logado.getRole().equals(Role.ADMIN) && logado.getId().longValue() != id.longValue()) {
-            throw new RegraException("Sem permissão");
-        }
         User user = userService.atualizar(id, dto, foto);
         return ResponseEntity.ok(user);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/users/{id}/role")
-    public ResponseEntity<?> atualizarRole(@PathVariable Long id,
-                                       @RequestBody UserRoleUpdateDto dto,
-                                       @AuthenticationPrincipal User logado) {
-
-        if (!logado.getRole().equals(Role.ADMIN)) {
-            throw new RegraException("Sem permissão");
-        }
+    public ResponseEntity<?> atualizarRole(@PathVariable Integer id,
+                                           @RequestBody UserRoleUpdateDto dto) {
 
         User user = userService.atualizarRole(id, dto);
         return ResponseEntity.ok(user);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
     @PatchMapping("/users/{id}/desativar")
-    public ResponseEntity<?> desativar(@PathVariable Long id,
-                                       @AuthenticationPrincipal User logado) {
+    public ResponseEntity<?> desativar(@PathVariable Integer id) {
 
-        if (!logado.getRole().equals(Role.ADMIN) && logado.getId().longValue() != id.longValue()) {
-            throw new RegraException("Sem permissão");
-        }
         userService.desativar(id);
-        return ResponseEntity.ok("Usuário desativado");
+        return ResponseEntity.ok(Map.of("mensagem", "Usuário desativado"));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/users/{id}/reativar")
-    public ResponseEntity<?> reativar(@PathVariable Long id,
-                                       @AuthenticationPrincipal User logado) {
-
-        if (!logado.getRole().equals(Role.ADMIN)) {
-            throw new RegraException("Sem permissão");
-        }
+    public ResponseEntity<?> reativar(@PathVariable Integer id) {
         userService.reativar(id);
-        return ResponseEntity.ok("Usuário reativado");
+        return ResponseEntity.ok(Map.of("mensagem", "Usuário reativado"));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<?> deletar(@PathVariable Long id,
-                                       @AuthenticationPrincipal User logado) {
+    public ResponseEntity<?> deletar(@PathVariable Integer id) {
 
-        if (!logado.getRole().equals(Role.ADMIN)) {
-            throw new RegraException("Sem permissão");
-        }
         userService.deletar(id);
-        return ResponseEntity.ok("Usuário excluído");
+        return ResponseEntity.ok(Map.of("mensagem", "Usuário excluído"));
     }
-
 
 }

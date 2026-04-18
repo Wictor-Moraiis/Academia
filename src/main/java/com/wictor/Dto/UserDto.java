@@ -5,6 +5,7 @@ import com.wictor.enums.Role;
 import com.wictor.enums.Tipo;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 public record UserDto(
@@ -49,7 +50,7 @@ public record UserDto(
         String num,
          String comp,
         @JsonFormat(pattern = "dd/MM/yyyy")
-        @NotBlank(message = "Data de nascimento é obrigatória")
+        @NotNull(message = "Data de nascimento é obrigatória")
         java.time.LocalDate datanasc,
         Role role,
         Tipo tipo

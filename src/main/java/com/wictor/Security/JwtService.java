@@ -27,19 +27,20 @@ public class JwtService {
     public String gerarToken(User user) {
         return Jwts.builder()
                 .setSubject(String.valueOf(user.getId()))
-                .claim("rule", user.getRole().name())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public Long extrairId(String token) {
-        return Long.parseLong(Jwts.parser()
-                .setSigningKey(key)
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject());
+    public Integer extrairId(String token) {
+        return Integer.parseInt(
+                Jwts.parser()
+                        .setSigningKey(key)
+                        .parseClaimsJws(token)
+                        .getBody()
+                        .getSubject()
+        );
     }
 
     public String extrairRule(String token) {

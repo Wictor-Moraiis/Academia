@@ -44,10 +44,11 @@ public class JwtFilter extends OncePerRequestFilter {
                 String token = authHeader.replace("Bearer ", "");
 
                 if (jwtService.validarToken(token)) {
-                    Long userId = jwtService.extrairId(token);
+                    Integer userId = jwtService.extrairId(token);
                     User user = userRepository.findById(userId).orElse(null);
 
                     if (user != null && user.isAtivo()) {
+
                         UsernamePasswordAuthenticationToken auth =
                                 new UsernamePasswordAuthenticationToken(
                                         user,
