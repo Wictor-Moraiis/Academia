@@ -32,7 +32,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        if (path.equals("/auth/login") || path.equals("/auth/autocadastro")) {
+        if (path.equals("/auth/login") || path.equals("/users")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -60,7 +60,9 @@ public class JwtFilter extends OncePerRequestFilter {
                     }
                 }
             } catch (Exception e) {
-
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Token inválido ou erro na autenticação");
+                return;
             }
         }
 
