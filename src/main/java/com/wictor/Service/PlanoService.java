@@ -1,24 +1,10 @@
 package com.wictor.Service;
 
 import com.wictor.Dto.*;
-import com.wictor.Security.CpfService;
-import com.wictor.Security.PasswordService;
-import com.wictor.enums.Role;
-import com.wictor.enums.Tipo;
 import com.wictor.exception.*;
 import com.wictor.model.Plano;
-import com.wictor.model.User;
 import com.wictor.repository.PlanoRepository;
-import com.wictor.util.AgeValidator;
-import com.wictor.util.CpfValidator;
-import com.wictor.util.NumberValidator;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 @Service
