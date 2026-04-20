@@ -1,6 +1,7 @@
 package com.wictor.model;
 
 import com.wictor.enums.Role;
+import com.wictor.enums.Sexo;
 import com.wictor.enums.Tipo;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -84,8 +85,9 @@ public class User implements UserDetails {
     @Column(name = "User_tel2")
     private String tel2;
 
-    @Column(name = "User_sexo", nullable = false, length = 1)
-    private String sexo;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "User_sexo", nullable = false)
+    private Sexo sexo;
 
     @Column(name = "User_cep", nullable = false, length = 8)
     private String cep;
@@ -97,7 +99,7 @@ public class User implements UserDetails {
     private String rua;
 
     @Column(name = "User_numcasa", nullable = false)
-    private String num;
+    private Integer numeroCasa;
 
     @Column(name = "User_comp")
     private String comp;
@@ -109,13 +111,16 @@ public class User implements UserDetails {
     private LocalDate datanasc;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "User_rule")
+    @Column(name = "User_rule", nullable = false)
     private Role role;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "User_tipo")
+    @Column(name = "User_tipo", nullable = false)
     private Tipo tipo;
 
     @Column(name = "User_ativo", nullable = false)
     private boolean ativo;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Funcionario funcionario;
 }

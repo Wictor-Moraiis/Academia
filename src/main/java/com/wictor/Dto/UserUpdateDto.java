@@ -1,6 +1,7 @@
 package com.wictor.Dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.wictor.enums.Sexo;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 
@@ -26,7 +27,7 @@ public record UserUpdateDto(
                 message = "Telefone deve estar no formato 11987654321 ou (11) 98765-4321"
         )
         String tel2,
-        String sexo,
+        Sexo sexo,
         @Pattern(
                 regexp = "\\d{5}-?\\d{3}",
                 message = "CEP inválido"
@@ -34,7 +35,7 @@ public record UserUpdateDto(
         String cep,
         String bairro,
         String rua,
-        String num,
+        Integer numeroCasa,
         String comp,
         @JsonFormat(pattern = "dd/MM/yyyy")
         java.time.LocalDate datanasc

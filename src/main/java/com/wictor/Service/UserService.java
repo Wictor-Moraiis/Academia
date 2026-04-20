@@ -6,6 +6,7 @@ import com.wictor.Dto.UserUpdateDto;
 import com.wictor.Security.PasswordService;
 import com.wictor.Security.CpfService;
 import com.wictor.enums.Role;
+import com.wictor.enums.Sexo;
 import com.wictor.enums.Tipo;
 import com.wictor.exception.*;
 import com.wictor.model.User;
@@ -48,11 +49,11 @@ public class UserService {
                         .senha(PasswordService.Criptografia("admin123"))
                         .email1("admin@adm.com")
                         .tel1("11912345678")
-                        .sexo("m")
+                        .sexo(Sexo.M)
                         .cep("12345678")
                         .bairro("Jardim Adm")
                         .rua("Rua Administrador")
-                        .num("1")
+                        .numeroCasa(1)
                         .datanasc(java.time.LocalDate.of(1990, 1, 1))
                         .role(Role.ADMIN)
                         .tipo(Tipo.FUNCIONARIO)
@@ -104,7 +105,7 @@ public class UserService {
                 .cep(cepp)
                 .bairro(userDTO.bairro())
                 .rua(userDTO.rua())
-                .num(userDTO.num())
+                .numeroCasa(userDTO.numeroCasa())
                 .comp(userDTO.comp())
                 .datanasc(userDTO.datanasc())
                 .ativo(true);
@@ -226,7 +227,7 @@ public class UserService {
             user.setTel2(NumberValidator.limpar(dto.tel2()));
         }
 
-        if (dto.sexo() != null && !dto.sexo().isBlank()) {
+        if (dto.sexo() != null) {
             user.setSexo(dto.sexo());
         }
 
@@ -243,8 +244,8 @@ public class UserService {
             user.setRua(dto.rua());
         }
 
-        if (dto.num() != null && !dto.num().isBlank()) {
-            user.setNum(dto.num());
+        if (dto.numeroCasa() != null) {
+            user.setNumeroCasa(dto.numeroCasa());
         }
 
         if (dto.comp() != null && !dto.comp().isBlank()) {

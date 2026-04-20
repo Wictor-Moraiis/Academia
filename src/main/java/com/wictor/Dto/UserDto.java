@@ -2,6 +2,7 @@ package com.wictor.Dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.wictor.enums.Role;
+import com.wictor.enums.Sexo;
 import com.wictor.enums.Tipo;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -34,8 +35,8 @@ public record UserDto(
                 message = "Telefone deve estar no formato 11987654321 ou (11) 98765-4321"
         )
          String tel2,
-        @NotBlank(message = "Sexo é obrigatório")
-        String sexo,
+        @NotNull(message = "Sexo é obrigatório")
+        Sexo sexo,
         @NotBlank(message = "Cep é obrigatório")
         @Pattern(
                 regexp = "\\d{5}-?\\d{3}",
@@ -46,8 +47,8 @@ public record UserDto(
         String bairro,
         @NotBlank(message = "Rua é obrigatória")
          String rua,
-        @NotBlank(message = "Número de residência é obrigatório")
-        String num,
+        @NotNull(message = "Número de residência é obrigatório")
+        Integer numeroCasa,
          String comp,
         @JsonFormat(pattern = "dd/MM/yyyy")
         @NotNull(message = "Data de nascimento é obrigatória")
