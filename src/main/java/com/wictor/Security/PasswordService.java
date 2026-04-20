@@ -2,7 +2,6 @@ package com.wictor.Security;
 
 import de.mkammerer.argon2.Argon2;
 import de.mkammerer.argon2.Argon2Factory;
-import com.wictor.Security.Settings;
 import static com.wictor.Security.Settings.pepper;
 
 public class PasswordService {
