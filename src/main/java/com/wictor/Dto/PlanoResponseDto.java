@@ -5,5 +5,6 @@ import java.math.BigDecimal;
 public record PlanoResponseDto(
         Integer id,
         String nome,
-        BigDecimal valor
+        BigDecimal valor,
+        Integer validade
 ) {}

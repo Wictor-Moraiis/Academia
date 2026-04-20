@@ -52,7 +52,8 @@ public class PlanoService {
                 .map(p -> new PlanoResponseDto(
                         p.getId(),
                         p.getNome(),
-                        p.getValor()
+                        p.getValor(),
+                        p.getValidade()
                 ))
                 .toList();
     }
