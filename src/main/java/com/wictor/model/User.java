@@ -121,6 +121,9 @@ public class User implements UserDetails {
     @Column(name = "User_ativo", nullable = false)
     private boolean ativo;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Funcionario funcionario;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Aluno aluno;
 }

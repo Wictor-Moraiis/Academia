@@ -335,7 +335,7 @@ public class UserService {
                 Files.deleteIfExists(path);
 
             } catch (IOException e) {
-                System.err.println("Failed to delete the file: " + e.getMessage());
+                System.err.println("Falha ao deletar a imagem: " + e.getMessage());
             }
         }
 

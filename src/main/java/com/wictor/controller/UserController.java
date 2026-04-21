@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.util.Map;
 
 @RestController
@@ -37,7 +38,6 @@ public class UserController {
             @AuthenticationPrincipal User logado) {
 
         User novo = userService.cadastrar(dto, foto, logado);
-
         return ResponseEntity.status(201).body(novo);
     }
 
