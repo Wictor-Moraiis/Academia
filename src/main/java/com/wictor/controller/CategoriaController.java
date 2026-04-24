@@ -1,6 +1,7 @@
 package com.wictor.controller;
 
 import com.wictor.Dto.CategoriaDto;
+import com.wictor.Dto.CategoriaUpdateDto;
 import com.wictor.Service.CategoriaService;
 import com.wictor.model.Categoria;
 import jakarta.validation.Valid;
@@ -31,7 +32,7 @@ public class CategoriaController {
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/alterar/{id}")
     public ResponseEntity<?> alterar(@PathVariable Integer id,
-                                     @RequestBody @Valid CategoriaDto dto) {
+                                     @RequestBody @Valid CategoriaUpdateDto dto) {
 
         Categoria categoria = categoriaService.atualizar(id, dto);
         return ResponseEntity.ok(categoria);

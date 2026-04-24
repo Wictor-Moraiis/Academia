@@ -27,7 +27,7 @@ public class PlanoService {
         return repository.save(plano);
     }
 
-    public Plano atualizar(Integer id, PlanoDto dto) {
+    public Plano atualizar(Integer id, PlanoUpdateDto dto) {
         Plano plano = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Plano não encontrado"));
 

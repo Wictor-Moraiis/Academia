@@ -32,7 +32,7 @@ public class PlanoController {
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/alterar/{id}")
     public ResponseEntity<?> alterar(@PathVariable Integer id,
-            @RequestBody @Valid PlanoDto dto) {
+            @RequestBody @Valid PlanoUpdateDto dto) {
 
         Plano plano = planoService.atualizar(id, dto);
         return ResponseEntity.ok(plano);

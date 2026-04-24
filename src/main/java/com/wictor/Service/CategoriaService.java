@@ -2,6 +2,7 @@ package com.wictor.Service;
 
 import com.wictor.Dto.CategoriaDto;
 import com.wictor.Dto.CategoriaResponseDto;
+import com.wictor.Dto.CategoriaUpdateDto;
 import com.wictor.exception.NotFoundException;
 import com.wictor.model.Categoria;
 import com.wictor.repository.CategoriaRepository;
@@ -27,7 +28,7 @@ public class CategoriaService {
         return repository.save(categoria);
     }
 
-    public Categoria atualizar(Integer id, CategoriaDto dto) {
+    public Categoria atualizar(Integer id, CategoriaUpdateDto dto) {
         Categoria categoria = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Categoria não encontrada"));
 
