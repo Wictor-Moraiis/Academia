@@ -1,10 +1,14 @@
 package com.wictor.Service;
 
+import com.wictor.Dto.AlunoResponseDto;
 import com.wictor.Dto.FuncionarioDto;
+import com.wictor.Dto.FuncionarioResponseDto;
+import com.wictor.Dto.FuncionarioUpdateDto;
 import com.wictor.exception.*;
 import com.wictor.model.Categoria;
 import com.wictor.model.Funcionario;
 import com.wictor.model.User;
+import com.wictor.repository.AlunoRepository;
 import com.wictor.repository.CategoriaRepository;
 import com.wictor.repository.FuncionarioRepository;
 import com.wictor.repository.UserRepository;
@@ -19,13 +23,16 @@ public class FuncionarioService {
     private final FuncionarioRepository repository;
     private final UserRepository userRepository;
     private final CategoriaRepository categoriaRepository;
+    private final AlunoRepository alunoRepository;
 
     public FuncionarioService(FuncionarioRepository repository,
                               UserRepository userRepository,
-                              CategoriaRepository categoriaRepository) {
+                              CategoriaRepository categoriaRepository,
+                              AlunoRepository alunoRepository) {
         this.repository = repository;
         this.userRepository = userRepository;
         this.categoriaRepository = categoriaRepository;
+        this.alunoRepository = alunoRepository;
     }
 
     @Transactional
@@ -33,19 +40,18 @@ public class FuncionarioService {
 
         User user = userRepository.findById(dto.userId())
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
-        if (repository.existsById(user.getId())) {
+        if (repository.existsByUserId(user.getId())) {
             throw new ConflitoException("Usuário já é um funcionário");
         }
         if (!user.isAtivo()) {
             throw new RegraException("Usuário desativado");
         }
-        //boolean existsByUserId(Integer userId);
-        //if (alunoRepository.existsByUserId(user.getId())) {
-           // throw new RegraException("Usuário já é aluno");
-        //}
+        if (alunoRepository.existsByUserId(user.getId())) {
+            throw new RegraException("Usuário já é aluno");
+        }
         Categoria categoria = categoriaRepository.findById(dto.categoriaId())
                 .orElseThrow(() -> new NotFoundException("Categoria não encontrada"));
-        if (dto.cref() != null && repository.existsByCref(dto.cref())) {
+        if (dto.cref() != null && !dto.cref().isBlank() && repository.existsByCref(dto.cref())) {
             throw new ConflitoException("Cref já cadastrado");
         }
         if (dto.turnoIni() == null || dto.turnoFim() == null ||
@@ -54,7 +60,7 @@ public class FuncionarioService {
         }
         Funcionario.FuncionarioBuilder builder = Funcionario.builder()
                 .user(user)
-                .cref(dto.cref())
+                .cref(dto.cref() != null && !dto.cref().isBlank() ? dto.cref() : null)
                 .tipoContrato(dto.tipoContrato())
                 .turnoIni(dto.turnoIni())
                 .turnoFim(dto.turnoFim())
@@ -69,7 +75,7 @@ public class FuncionarioService {
     }
 
     @Transactional
-    public Funcionario atualizar(Integer id, FuncionarioDto dto) {
+    public FuncionarioResponseDto atualizar(Integer id, FuncionarioUpdateDto dto) {
         Funcionario funcionario = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Funcionário não encontrado"));
 
@@ -122,7 +128,9 @@ public class FuncionarioService {
             funcionario.setCategoria(categoria);
         }
 
-        return repository.save(funcionario);
+        repository.save(funcionario);
+
+        return repository.buscarFuncionarioCompleto(funcionario.getId());
 
     }
 

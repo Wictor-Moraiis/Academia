@@ -8,7 +8,7 @@ import java.time.LocalTime;
 
 public record FuncionarioDto(
 
-        @NotNull(message = "Tipo de contrato é obrigatório")
+        @NotNull(message = "Identificador de usuário é obrigatório")
         Integer userId,
         String cref,
         @NotNull(message = "Tipo de contrato é obrigatório")
@@ -27,5 +27,4 @@ public record FuncionarioDto(
         String tipoConta,
         @NotNull(message = "Categoria é obrigatória")
         Integer categoriaId
-) {
-}
+) { }

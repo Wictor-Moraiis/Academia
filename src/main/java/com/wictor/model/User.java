@@ -111,7 +111,7 @@ public class User implements UserDetails {
     private LocalDate datanasc;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "User_rule", nullable = false)
+    @Column(name = "User_role", nullable = false)
     private Role role;
 
     @Enumerated(EnumType.STRING)

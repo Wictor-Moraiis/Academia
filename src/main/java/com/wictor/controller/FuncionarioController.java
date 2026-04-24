@@ -1,6 +1,7 @@
 package com.wictor.controller;
 
-import com.wictor.Dto.*;
+import com.wictor.Dto.FuncionarioDto;
+import com.wictor.Dto.FuncionarioUpdateDto;
 import com.wictor.Service.FuncionarioService;
 import com.wictor.model.Funcionario;
 import jakarta.validation.Valid;
@@ -19,6 +20,7 @@ public class FuncionarioController {
         this.funcionarioService = funcionarioService;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/create")
     public ResponseEntity<?> cadastrar(
             @RequestBody @Valid FuncionarioDto dto) {
@@ -30,10 +32,9 @@ public class FuncionarioController {
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
     @PatchMapping("/alterar/{id}")
     public ResponseEntity<?> atualizar(@PathVariable Integer id,
-                                       @RequestBody @Valid FuncionarioDto dto) {
+                                       @RequestBody @Valid FuncionarioUpdateDto dto) {
 
-        Funcionario funcionario = funcionarioService.atualizar(id, dto);
-        return ResponseEntity.ok(funcionario);
+        return ResponseEntity.ok(funcionarioService.atualizar(id, dto));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
