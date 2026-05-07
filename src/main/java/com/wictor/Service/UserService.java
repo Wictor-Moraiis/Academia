@@ -33,7 +33,7 @@ public class UserService {
         this.repository = repository;
     }
 
-    @Value("${file.upload-dir}")
+    @Value("${file.upload-dir-user}")
     private String uploadDir;
     int maximumSizeMB = 5000000;
 
