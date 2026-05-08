@@ -1,6 +1,7 @@
 package com.wictor.exception;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,6 +24,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(401).body(
                 Map.of("erro", ex.getMessage())
         );
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<?> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity.status(403)
+                .body(Map.of("erro", ex.getMessage()
+                ));
     }
 
     @ExceptionHandler(NotFoundException.class)

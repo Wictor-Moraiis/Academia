@@ -5,7 +5,6 @@ import com.wictor.Dto.MaquinaResponseDto;
 import com.wictor.Dto.MaquinaUpdateDto;
 import com.wictor.exception.NotFoundException;
 import com.wictor.model.Maquina;
-import com.wictor.model.User;
 import com.wictor.repository.MaquinaRepository;
 import org.springframework.stereotype.Service;
 
