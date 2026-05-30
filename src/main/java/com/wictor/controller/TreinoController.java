@@ -1,6 +1,7 @@
 package com.wictor.controller;
 
 import com.wictor.Dto.TreinoDto;
+import com.wictor.Dto.TreinoResponseDto;
 import com.wictor.Dto.TreinoUpdateDto;
 import com.wictor.Service.TreinoService;
 import com.wictor.model.Treino;
@@ -23,17 +24,32 @@ public class TreinoController {
         this.TreinoService =  TreinoService;
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PostMapping("/create")
     public ResponseEntity<?> cadastrar(
             @RequestBody @Valid TreinoDto dto,
             @AuthenticationPrincipal User logado) {
 
         Treino novo = TreinoService.cadastrar(dto, logado);
-        return ResponseEntity.status(201).body(novo);
+
+        TreinoResponseDto response = new TreinoResponseDto(
+                novo.getId(),
+                novo.getNome(),
+                novo.getObjTreino(),
+                novo.getInicio(),
+                novo.getFim(),
+                novo.getCriado(),
+                novo.getModificado(),
+                novo.isAtivo(),
+                novo.getAluno() != null
+                        ? novo.getAluno().getUser().getNome()
+                        : null
+        );
+
+        return ResponseEntity.status(201).body(response);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PatchMapping("/alterar/{id}")
     public ResponseEntity<?> alterar(@PathVariable Integer id,
                                      @RequestBody @Valid TreinoUpdateDto dto,
@@ -43,7 +59,7 @@ public class TreinoController {
         return ResponseEntity.ok(treino);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PatchMapping("/desativar/{id}")
     public ResponseEntity<?> desativar(@PathVariable Integer id,
                                        @AuthenticationPrincipal User logado){
