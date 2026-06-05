@@ -1,8 +1,8 @@
 package com.wictor.controller;
 
-import com.wictor.Dto.CategoriaDto;
-import com.wictor.Dto.CategoriaUpdateDto;
-import com.wictor.Service.CategoriaService;
+import com.wictor.dto.categoria.CategoriaDto;
+import com.wictor.dto.categoria.CategoriaUpdateDto;
+import com.wictor.service.CategoriaService;
 import com.wictor.model.Categoria;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

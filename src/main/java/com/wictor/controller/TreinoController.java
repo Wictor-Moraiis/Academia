@@ -1,9 +1,9 @@
 package com.wictor.controller;
 
-import com.wictor.Dto.TreinoDto;
-import com.wictor.Dto.TreinoResponseDto;
-import com.wictor.Dto.TreinoUpdateDto;
-import com.wictor.Service.TreinoService;
+import com.wictor.dto.treino.TreinoDto;
+import com.wictor.dto.treinoexercicio.TreinoResponseDto;
+import com.wictor.dto.treinoexercicio.TreinoUpdateDto;
+import com.wictor.service.TreinoService;
 import com.wictor.model.Treino;
 import com.wictor.model.User;
 import jakarta.validation.Valid;

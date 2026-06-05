@@ -1,8 +1,8 @@
 package com.wictor.controller;
 
-import com.wictor.Dto.ExercicioDto;
-import com.wictor.Dto.ExercicioUpdateDto;
-import com.wictor.Service.ExercicioService;
+import com.wictor.dto.exercicio.ExercicioDto;
+import com.wictor.dto.exercicio.ExercicioUpdateDto;
+import com.wictor.service.ExercicioService;
 import com.wictor.model.Exercicio;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

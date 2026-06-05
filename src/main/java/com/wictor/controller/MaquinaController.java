@@ -1,8 +1,8 @@
 package com.wictor.controller;
 
-import com.wictor.Dto.MaquinaDto;
-import com.wictor.Dto.MaquinaUpdateDto;
-import com.wictor.Service.MaquinaService;
+import com.wictor.dto.maquina.MaquinaDto;
+import com.wictor.dto.maquina.MaquinaUpdateDto;
+import com.wictor.service.MaquinaService;
 import com.wictor.model.Maquina;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

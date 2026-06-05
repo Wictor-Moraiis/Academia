@@ -1,8 +1,8 @@
 package com.wictor.controller;
 
-import com.wictor.Dto.FinanceiroDto;
-import com.wictor.Dto.FinanceiroUpdateDto;
-import com.wictor.Service.FinanceiroService;
+import com.wictor.dto.financeiro.FinanceiroDto;
+import com.wictor.dto.financeiro.FinanceiroUpdateDto;
+import com.wictor.service.FinanceiroService;
 import com.wictor.model.Financeiro;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

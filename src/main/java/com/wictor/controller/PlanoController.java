@@ -1,7 +1,8 @@
 package com.wictor.controller;
 
-import com.wictor.Dto.*;
-import com.wictor.Service.PlanoService;
+import com.wictor.dto.plano.PlanoDto;
+import com.wictor.dto.plano.PlanoUpdateDto;
+import com.wictor.service.PlanoService;
 import com.wictor.model.Plano;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

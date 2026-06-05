@@ -1,7 +1,6 @@
 package com.wictor.repository;
 
-import com.wictor.Dto.AlunoResponseDto;
-import com.wictor.Dto.FuncionarioResponseDto;
+import com.wictor.dto.funcionario.FuncionarioResponseDto;
 import com.wictor.model.Funcionario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

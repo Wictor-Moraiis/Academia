@@ -1,9 +1,9 @@
 package com.wictor.controller;
 
-import com.wictor.Dto.AlunoDto;
-import com.wictor.Dto.AlunoResponseDto;
-import com.wictor.Dto.AlunoUpdateDto;
-import com.wictor.Service.AlunoService;
+import com.wictor.dto.aluno.AlunoDto;
+import com.wictor.dto.aluno.AlunoResponseDto;
+import com.wictor.dto.aluno.AlunoUpdateDto;
+import com.wictor.service.AlunoService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

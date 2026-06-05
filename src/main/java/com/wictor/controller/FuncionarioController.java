@@ -1,8 +1,8 @@
 package com.wictor.controller;
 
-import com.wictor.Dto.FuncionarioDto;
-import com.wictor.Dto.FuncionarioUpdateDto;
-import com.wictor.Service.FuncionarioService;
+import com.wictor.dto.funcionario.FuncionarioDto;
+import com.wictor.dto.funcionario.FuncionarioUpdateDto;
+import com.wictor.service.FuncionarioService;
 import com.wictor.model.Funcionario;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

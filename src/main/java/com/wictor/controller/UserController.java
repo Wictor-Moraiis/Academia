@@ -1,13 +1,13 @@
 package com.wictor.controller;
 
-import com.wictor.Dto.LoginDto;
-import com.wictor.Dto.UserDto;
-import com.wictor.Dto.UserRoleUpdateDto;
-import com.wictor.Dto.UserUpdateDto;
-import com.wictor.Security.JwtService;
+import com.wictor.dto.LoginDto;
+import com.wictor.dto.user.UserDto;
+import com.wictor.dto.user.UserRoleUpdateDto;
+import com.wictor.dto.user.UserUpdateDto;
+import com.wictor.security.JwtService;
 import com.wictor.exception.UnauthorizedException;
 import com.wictor.model.User;
-import com.wictor.Service.UserService;
+import com.wictor.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

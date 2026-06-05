@@ -1,9 +1,9 @@
 package com.wictor.controller;
 
-import com.wictor.Dto.TreinoExercicioDto;
-import com.wictor.Dto.TreinoExercicioResponseDto;
-import com.wictor.Dto.TreinoExercicioUpdateDto;
-import com.wictor.Service.TreinoExercicioService;
+import com.wictor.dto.treino.TreinoExercicioDto;
+import com.wictor.dto.treino.TreinoExercicioResponseDto;
+import com.wictor.dto.treinoexercicio.TreinoExercicioUpdateDto;
+import com.wictor.service.TreinoExercicioService;
 import com.wictor.model.TreinoExercicio;
 import com.wictor.model.TreinoExercicioId;
 import com.wictor.model.User;
