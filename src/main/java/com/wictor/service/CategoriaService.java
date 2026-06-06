@@ -12,24 +12,26 @@ import java.util.List;
 @Service
 public class CategoriaService {
 
-    private final CategoriaRepository repository;
+    private final CategoriaRepository categoriaRepository;
 
-    public CategoriaService(CategoriaRepository repository) {
-        this.repository = repository;
+    public CategoriaService(CategoriaRepository categoriaRepository) {
+        this.categoriaRepository = categoriaRepository;
     }
 
-    public Categoria cadastrar(CategoriaDto categoriaDTO) {
+    public CategoriaResponseDto cadastrar(CategoriaDto categoriaDTO) {
 
-        Categoria.CategoriaBuilder builder = Categoria.builder()
-                .nome(categoriaDTO.nome())
-                .salario(categoriaDTO.salario());
-        Categoria categoria = builder.build();
+        Categoria categoria = categoriaRepository.save(
+                Categoria.builder()
+                        .nome(categoriaDTO.nome())
+                        .salario(categoriaDTO.salario())
+                        .build()
+        );
 
-        return repository.save(categoria);
+        return toResponseDto(categoria);
     }
 
-    public Categoria atualizar(Integer id, CategoriaUpdateDto dto) {
-        Categoria categoria = repository.findById(id)
+    public CategoriaResponseDto atualizar(Integer id, CategoriaUpdateDto dto) {
+        Categoria categoria = categoriaRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Categoria não encontrada"));
 
         if (dto.nome() != null && !dto.nome().isBlank()) {
@@ -40,30 +42,40 @@ public class CategoriaService {
             categoria.setSalario(dto.salario());
         }
 
-        return repository.save(categoria);
+        categoriaRepository.save(categoria);
+
+        return toResponseDto(categoria);
     }
 
     public List<CategoriaResponseDto> listar() {
-        return repository.findAll()
+
+        return categoriaRepository.findAll()
                 .stream()
-                .map(p -> new CategoriaResponseDto(
-                        p.getId(),
-                        p.getNome(),
-                        p.getSalario()
-                ))
+                .map(this::toResponseDto)
                 .toList();
     }
 
-    public Categoria buscarPorId(Integer id) {
-        return repository.findById(id)
+    private CategoriaResponseDto toResponseDto(Categoria categoria) {
+        return new CategoriaResponseDto(
+               categoria.getId(),
+                categoria.getNome(),
+                categoria.getSalario()
+        );
+    }
+
+    public CategoriaResponseDto buscarPorId(Integer id) {
+
+        Categoria categoria = categoriaRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Categoria não encontrada"));
+
+        return toResponseDto(categoria);
     }
 
     public void deletar(Integer id) {
 
-        if (!repository.existsById(id)) {
+        if (!categoriaRepository.existsById(id)) {
             throw new NotFoundException("Categoria não encontrada");
         }
-        repository.deleteById(id);
+        categoriaRepository.deleteById(id);
     }
 }
