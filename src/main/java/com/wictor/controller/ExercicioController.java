@@ -1,16 +1,15 @@
 package com.wictor.controller;
 
 import com.wictor.dto.exercicio.ExercicioDto;
+import com.wictor.dto.exercicio.ExercicioResponseDto;
 import com.wictor.dto.exercicio.ExercicioUpdateDto;
 import com.wictor.service.ExercicioService;
-import com.wictor.model.Exercicio;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/exercicios")
@@ -19,44 +18,42 @@ public class ExercicioController {
     private final ExercicioService exercicioService;
 
     public ExercicioController(ExercicioService exercicioService) {
-        this. exercicioService =  exercicioService;
+        this.exercicioService =  exercicioService;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping(value = "/create", consumes = "multipart/form-data")
-    public ResponseEntity<?> cadastrar(
+    @PostMapping(consumes = "multipart/form-data")
+    public ResponseEntity<ExercicioResponseDto> cadastrar(
             @RequestPart("dados") @Valid ExercicioDto dto,
             @RequestPart(value = "foto", required = false) MultipartFile foto) {
 
-        Exercicio novo = exercicioService.cadastrar(dto, foto);
-        return ResponseEntity.status(201).body(novo);
+        return ResponseEntity.status(201).body(exercicioService.cadastrar(dto,foto));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping(value = "/alterar/{id}", consumes = "multipart/form-data")
-    public ResponseEntity<?> alterar(@PathVariable Integer id,
+    @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
+    public ResponseEntity<ExercicioResponseDto> alterar(@PathVariable Integer id,
                                      @RequestPart("dados") @Valid ExercicioUpdateDto dto,
                                      @RequestPart(value = "foto", required = false) MultipartFile foto) {
 
-        Exercicio exercicio = exercicioService.atualizar(id, dto, foto);
-        return ResponseEntity.ok(exercicio);
+        return ResponseEntity.ok(exercicioService.atualizar(id, dto, foto));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/excluir/{id}")
-    public ResponseEntity<?> deletar(@PathVariable Integer id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
 
         exercicioService.deletar(id);
-        return ResponseEntity.ok(Map.of("mensagem", "Exercicio excluído"));
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping
-    public ResponseEntity<?> listar() {
+    public ResponseEntity<List<ExercicioResponseDto>> listar() {
         return ResponseEntity.ok(exercicioService.listar());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> buscarPorId(@PathVariable Integer id) {
+    public ResponseEntity<ExercicioResponseDto> buscarPorId(@PathVariable Integer id) {
         return ResponseEntity.ok(exercicioService.buscarPorId(id));
     }
 }

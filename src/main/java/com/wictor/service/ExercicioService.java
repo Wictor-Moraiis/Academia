@@ -11,6 +11,7 @@ import com.wictor.model.Exercicio;
 import com.wictor.model.Maquina;
 import com.wictor.repository.ExercicioRepository;
 import com.wictor.repository.MaquinaRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,22 +25,22 @@ import java.util.List;
 @Service
 public class ExercicioService {
 
-    private final ExercicioRepository repository;
+    private final ExercicioRepository exercicioRepository;
     private final MaquinaRepository maquinaRepository;
 
     @Value("${file.upload-dir-exercicio}")
     private String uploadDir;
-    int maximumSizeMB = 5000000;
+    private static final long MAX_FILE_SIZE = 5_000_000;
 
-    public ExercicioService(ExercicioRepository repository,
-                            MaquinaRepository maquinaRepository
-    ) {
+    public ExercicioService(ExercicioRepository exercicioRepository,
+                            MaquinaRepository maquinaRepository) {
 
-        this.repository = repository;
+        this.exercicioRepository = exercicioRepository;
         this.maquinaRepository = maquinaRepository;
     }
 
-    public Exercicio cadastrar(ExercicioDto exercicioDTO, MultipartFile foto) {
+    @Transactional
+    public ExercicioResponseDto cadastrar(ExercicioDto exercicioDTO, MultipartFile foto) {
 
         Maquina maquina = null;
 
@@ -54,38 +55,24 @@ public class ExercicioService {
                 .maquina(maquina);
         Exercicio exercicio = builder.build();
 
-        Exercicio savedExercicio = repository.save(exercicio);
-        Integer lastId = savedExercicio.getId();
+        Exercicio savedExercicio = exercicioRepository.save(exercicio);
 
         if (foto != null && !foto.isEmpty()) {
-            String tipo = foto.getContentType();
 
-            if (tipo == null || !tipo.startsWith("image/")) {
-                throw new InvalidImageException("Arquivo não é uma imagem válida");
-            }
+            validarImagem(foto);
 
-            if (foto.getSize() > maximumSizeMB) {
-                throw new SizeException("A imagem é muito grande. Tamanho máximo é de 5 MB");
-            }
+            savedExercicio.setFoto(
+                    salvarImagem(foto, savedExercicio.getId())
+            );
 
-            String newName = "exercicio_" + lastId + ".png";
-            byte[] fotoBytes;
-            Path basePath = Paths.get(uploadDir);
-            Path finalPath = basePath.resolve(newName);
-            try {
-                fotoBytes = foto.getBytes();
-                Files.write(finalPath, fotoBytes);
-            } catch (IOException e) {
-                throw new InternalErrorException("Erro ao salvar imagem");
-            }
-            savedExercicio.setFoto("Exercicio_img/" + newName);
-            repository.save(savedExercicio);
+            exercicioRepository.save(savedExercicio);
         }
-        return savedExercicio;
+        return toResponseDto(savedExercicio);
     }
 
-    public Exercicio atualizar(Integer id, ExercicioUpdateDto dto, MultipartFile foto) {
-        Exercicio exercicio = repository.findById(id)
+    @Transactional
+    public ExercicioResponseDto atualizar(Integer id, ExercicioUpdateDto dto, MultipartFile foto) {
+        Exercicio exercicio = exercicioRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Exercicio não encontrado"));
 
         if (dto.nome() != null && !dto.nome().isBlank()) {
@@ -103,50 +90,33 @@ public class ExercicioService {
         }
 
         if (foto != null && !foto.isEmpty()) {
-            String tipo = foto.getContentType();
 
-            if (tipo == null || !tipo.startsWith("image/")) {
-                throw new InvalidImageException("Arquivo não é uma imagem válida");
-            }
+            validarImagem(foto);
 
-            if (foto.getSize() > maximumSizeMB) {
-                throw new SizeException("A imagem é muito grande. Tamanho máximo é de 5 MB");
-            }
-
-            String newName = "Exercicio_" + exercicio.getId() + ".png";
-            byte[] fotoBytes;
-            Path basePath = Paths.get(uploadDir);
-            Path finalPath = basePath.resolve(newName);
-            try {
-                fotoBytes = foto.getBytes();
-                Files.write(finalPath, fotoBytes);
-            } catch (IOException e) {
-                throw new InternalErrorException("Erro ao salvar imagem");
-            }
-            exercicio.setFoto("Exercicio_img/" + newName);
+            exercicio.setFoto(
+                    salvarImagem(foto, exercicio.getId())
+            );
         }
-
-        return repository.save(exercicio);
-
+        return toResponseDto(exercicio);
     }
 
     public List<ExercicioResponseDto> listar() {
-        return repository.findAll()
+
+        return exercicioRepository.findAll()
                 .stream()
-                .map(e -> new ExercicioResponseDto(
-                        e.getId(),
-                        e.getNome(),
-                        e.getObs(),
-                        e.getMaquina() != null ? e.getMaquina().getNome() : null
-                ))
+                .map(this::toResponseDto)
                 .toList();
     }
 
     public ExercicioResponseDto buscarPorId(Integer id) {
 
-        Exercicio exercicio = repository.findById(id)
+        Exercicio exercicio = exercicioRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Exercicio não encontrado"));
 
+        return toResponseDto(exercicio);
+    }
+
+    private ExercicioResponseDto toResponseDto(Exercicio exercicio) {
         return new ExercicioResponseDto(
                 exercicio.getId(),
                 exercicio.getNome(),
@@ -157,19 +127,56 @@ public class ExercicioService {
         );
     }
 
+    @Transactional
     public void deletar(Integer id) {
 
-        Exercicio exercicio = repository.findById(id)
+        Exercicio exercicio = exercicioRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Exercicio não encontrado"));
         if (exercicio.getFoto() != null) {
             try {
-                Path path = Paths.get(exercicio.getFoto());
+                Path path = Paths.get(uploadDir)
+                        .resolve(exercicio.getFoto());
                 Files.deleteIfExists(path);
 
-            } catch (IOException e) {
-                System.err.println("Falha ao deletar a imagem: " + e.getMessage());
+            }catch (IOException e) {
+                throw new InternalErrorException("Erro ao deletar imagem");
             }
         }
-        repository.deleteById(id);
+        exercicioRepository.delete(exercicio);
+    }
+
+    private void validarImagem(MultipartFile foto) {
+
+        String tipo = foto.getContentType();
+
+        if (tipo == null || !tipo.startsWith("image/")) {
+            throw new InvalidImageException("Arquivo não é uma imagem válida");
+        }
+
+        if (foto.getSize() > MAX_FILE_SIZE) {
+            throw new SizeException("A imagem é muito grande. Tamanho máximo é de 5 MB");
+        }
+    }
+
+    private String salvarImagem(MultipartFile foto, Integer id) {
+
+        Path basePath = Paths.get(uploadDir);
+
+        try {
+            Files.createDirectories(basePath);
+
+            String fileName = "exercicio_" + id + ".png";
+
+            Files.write(
+                    basePath.resolve(fileName),
+                    foto.getBytes()
+            );
+
+            return fileName;
+
+        } catch (IOException e) {
+            throw new InternalErrorException("Erro ao salvar imagem");
+        }
     }
 }
+
