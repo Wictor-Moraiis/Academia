@@ -47,8 +47,7 @@ public class AlunoService {
         if (funcionarioRepository.existsByUserId(user.getId())) {
         throw new RegraException("Usuário já é um funcionário");
         }
-        Plano plano = planoRepository.findById(dto.planoId())
-                .orElseThrow(() -> new NotFoundException("Plano não encontrado"));
+        Plano plano = buscarPlanoPorId(dto.planoId());
 
         Aluno.AlunoBuilder builder = Aluno.builder()
                 .user(user)
@@ -67,8 +66,7 @@ public class AlunoService {
 
     @Transactional
     public AlunoResponseDto atualizar(Integer id, AlunoUpdateDto dto) {
-        Aluno aluno = alunoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Aluno não encontrado"));
+        Aluno aluno = buscarAlunoPorId(id);
 
         if (!aluno.getUser().isAtivo()) {
             throw new RegraException("Usuário desativado");
@@ -95,8 +93,7 @@ public class AlunoService {
         }
 
         if (dto.planoId() != null) {
-            Plano plano = planoRepository.findById(dto.planoId())
-                    .orElseThrow(() -> new NotFoundException("Plano não encontrado"));
+            Plano plano = buscarPlanoPorId(id);
             aluno.setPlano(plano);
         }
 
@@ -116,8 +113,7 @@ public class AlunoService {
     @Transactional
     public void deletar(Integer id) {
 
-        Aluno aluno = alunoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Aluno não encontrado"));
+        Aluno aluno = buscarAlunoPorId(id);
 
         alunoRepository.delete(aluno);
     }
@@ -136,6 +132,16 @@ public class AlunoService {
                 .stream()
                 .map(this::toResponseDto)
                 .toList();
+    }
+
+    private Aluno buscarAlunoPorId(Integer id) {
+        return alunoRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Aluno não encontrado"));
+    }
+
+    private Plano buscarPlanoPorId(Integer id) {
+        return planoRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Plano não encontrado"));
     }
 
     private AlunoResponseDto toResponseDto(Aluno aluno) {

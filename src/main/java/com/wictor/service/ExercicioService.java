@@ -72,8 +72,7 @@ public class ExercicioService {
 
     @Transactional
     public ExercicioResponseDto atualizar(Integer id, ExercicioUpdateDto dto, MultipartFile foto) {
-        Exercicio exercicio = exercicioRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Exercicio não encontrado"));
+        Exercicio exercicio = buscarExercicioPorId(id);
 
         if (dto.nome() != null && !dto.nome().isBlank()) {
             exercicio.setNome(dto.nome());
@@ -110,10 +109,12 @@ public class ExercicioService {
 
     public ExercicioResponseDto buscarPorId(Integer id) {
 
-        Exercicio exercicio = exercicioRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Exercicio não encontrado"));
+        return toResponseDto(buscarExercicioPorId(id));
+    }
 
-        return toResponseDto(exercicio);
+    private Exercicio buscarExercicioPorId(Integer id) {
+        return exercicioRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Exercicio não encontrado"));
     }
 
     private ExercicioResponseDto toResponseDto(Exercicio exercicio) {
@@ -130,8 +131,8 @@ public class ExercicioService {
     @Transactional
     public void deletar(Integer id) {
 
-        Exercicio exercicio = exercicioRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Exercicio não encontrado"));
+        Exercicio exercicio = buscarExercicioPorId(id);
+
         if (exercicio.getFoto() != null) {
             try {
                 Path path = Paths.get(uploadDir)

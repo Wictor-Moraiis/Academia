@@ -31,8 +31,7 @@ public class CategoriaService {
     }
 
     public CategoriaResponseDto atualizar(Integer id, CategoriaUpdateDto dto) {
-        Categoria categoria = categoriaRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Categoria não encontrada"));
+        Categoria categoria = buscarCategoriaPorId(id);
 
         if (dto.nome() != null && !dto.nome().isBlank()) {
             categoria.setNome(dto.nome());
@@ -65,17 +64,18 @@ public class CategoriaService {
 
     public CategoriaResponseDto buscarPorId(Integer id) {
 
-        Categoria categoria = categoriaRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Categoria não encontrada"));
+        return toResponseDto(buscarCategoriaPorId(id));
+    }
 
-        return toResponseDto(categoria);
+    private Categoria buscarCategoriaPorId(Integer id) {
+        return categoriaRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Categoria não encontrada"));
     }
 
     public void deletar(Integer id) {
 
-        if (!categoriaRepository.existsById(id)) {
-            throw new NotFoundException("Categoria não encontrada");
-        }
-        categoriaRepository.deleteById(id);
+        Categoria categoria = buscarCategoriaPorId(id);
+
+        categoriaRepository.delete(categoria);
     }
 }
