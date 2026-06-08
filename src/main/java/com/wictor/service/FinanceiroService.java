@@ -6,6 +6,7 @@ import com.wictor.dto.financeiro.FinanceiroUpdateDto;
 import com.wictor.exception.NotFoundException;
 import com.wictor.model.Financeiro;
 import com.wictor.repository.FinanceiroRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,26 +14,28 @@ import java.util.List;
 @Service
 public class FinanceiroService {
 
-    private final FinanceiroRepository repository;
+    private final FinanceiroRepository financeiroRepository;
 
-    public FinanceiroService(FinanceiroRepository repository) {
-        this.repository = repository;
+    public FinanceiroService(FinanceiroRepository financeiroRepository) {
+        this.financeiroRepository = financeiroRepository;
     }
 
-    public Financeiro cadastrar(FinanceiroDto financeiroDTO) {
+    public FinanceiroResponseDto cadastrar(FinanceiroDto financeiroDTO) {
 
-        Financeiro.FinanceiroBuilder builder = Financeiro.builder()
-                .nome(financeiroDTO.nome())
-                .data(financeiroDTO.data())
-                .valor(financeiroDTO.valor());
-        Financeiro financeiro = builder.build();
+        Financeiro financeiro = financeiroRepository.save(
+                Financeiro.builder()
+                        .nome(financeiroDTO.nome())
+                        .data(financeiroDTO.data())
+                        .valor(financeiroDTO.valor())
+                        .build()
+        );
 
-        return repository.save(financeiro);
+        return toResponseDto(financeiro);
     }
 
-    public Financeiro atualizar(Integer id, FinanceiroUpdateDto dto) {
-        Financeiro financeiro = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Atividade financeira não encontrada"));
+    @Transactional
+    public FinanceiroResponseDto atualizar(Integer id, FinanceiroUpdateDto dto) {
+        Financeiro financeiro = buscarFinanceiroPorId(id);
 
         if (dto.nome() != null && !dto.nome().isBlank()) {
             financeiro.setNome(dto.nome());
@@ -46,31 +49,41 @@ public class FinanceiroService {
             financeiro.setValor(dto.valor());
         }
 
-        return repository.save(financeiro);
+        financeiroRepository.save(financeiro);
+
+        return toResponseDto(financeiro);
     }
 
     public List<FinanceiroResponseDto> listar() {
-        return repository.findAll()
+        return financeiroRepository.findAll()
                 .stream()
-                .map(f -> new FinanceiroResponseDto(
-                        f.getId(),
-                        f.getNome(),
-                        f.getData(),
-                        f.getValor()
-                ))
+                .map(this::toResponseDto)
                 .toList();
     }
 
-    public Financeiro buscarPorId(Integer id) {
-        return repository.findById(id)
+    public FinanceiroResponseDto buscarPorId(Integer id) {
+
+        return toResponseDto(buscarFinanceiroPorId(id));
+    }
+
+    private Financeiro buscarFinanceiroPorId(Integer id) {
+        return financeiroRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Atividade financeira não encontrada"));
     }
 
     public void deletar(Integer id) {
 
-        if (!repository.existsById(id)) {
-            throw new NotFoundException("Atividade financeira não encontrada");
-        }
-        repository.deleteById(id);
+        Financeiro financeiro = buscarFinanceiroPorId(id);
+
+        financeiroRepository.delete(financeiro);
+    }
+
+    private FinanceiroResponseDto toResponseDto(Financeiro financeiro) {
+        return new FinanceiroResponseDto(
+                financeiro.getId(),
+                financeiro.getNome(),
+                financeiro.getData(),
+                financeiro.getValor()
+        );
     }
 }
