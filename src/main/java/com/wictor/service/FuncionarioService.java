@@ -15,31 +15,32 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
+import java.util.List;
 
 @Service
 public class FuncionarioService {
 
-    private final FuncionarioRepository repository;
+    private final FuncionarioRepository funcionarioRepository;
     private final UserRepository userRepository;
     private final CategoriaRepository categoriaRepository;
     private final AlunoRepository alunoRepository;
 
-    public FuncionarioService(FuncionarioRepository repository,
+    public FuncionarioService(FuncionarioRepository funcionarioRepository,
                               UserRepository userRepository,
                               CategoriaRepository categoriaRepository,
                               AlunoRepository alunoRepository) {
-        this.repository = repository;
+        this.funcionarioRepository = funcionarioRepository;
         this.userRepository = userRepository;
         this.categoriaRepository = categoriaRepository;
         this.alunoRepository = alunoRepository;
     }
 
     @Transactional
-    public Funcionario cadastrar(FuncionarioDto dto) {
+    public FuncionarioResponseDto cadastrar(FuncionarioDto dto) {
 
         User user = userRepository.findById(dto.userId())
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
-        if (repository.existsByUserId(user.getId())) {
+        if (funcionarioRepository.existsByUserId(user.getId())) {
             throw new ConflitoException("Usuário já é um funcionário");
         }
         if (!user.isAtivo()) {
@@ -48,45 +49,44 @@ public class FuncionarioService {
         if (alunoRepository.existsByUserId(user.getId())) {
             throw new RegraException("Usuário já é aluno");
         }
-        Categoria categoria = categoriaRepository.findById(dto.categoriaId())
-                .orElseThrow(() -> new NotFoundException("Categoria não encontrada"));
-        if (dto.cref() != null && !dto.cref().isBlank() && repository.existsByCref(dto.cref())) {
-            throw new ConflitoException("Cref já cadastrado");
+        Categoria categoria = buscarCategoriaPorId(dto.categoriaId());
+        if (dto.cref() != null && !dto.cref().isBlank()) {
+            validarFuncionarioPorCref(dto.cref());
         }
         if (dto.turnoIni() == null || dto.turnoFim() == null ||
                 dto.turnoFim().isBefore(dto.turnoIni())) {
             throw new RegraException("Turno inválido");
         }
-        Funcionario.FuncionarioBuilder builder = Funcionario.builder()
-                .user(user)
-                .cref(dto.cref() != null && !dto.cref().isBlank() ? dto.cref() : null)
-                .tipoContrato(dto.tipoContrato())
-                .turnoIni(dto.turnoIni())
-                .turnoFim(dto.turnoFim())
-                .banco(dto.banco())
-                .agencia(dto.agencia())
-                .conta(dto.conta())
-                .tipoConta(dto.tipoConta())
-                .categoria(categoria);
-        Funcionario funcionario = builder.build();
 
-        return repository.save(funcionario);
+        Funcionario funcionario = funcionarioRepository.save(
+                Funcionario.builder()
+                        .user(user)
+                        .cref(dto.cref() != null && !dto.cref().isBlank() ? dto.cref() : null)
+                        .tipoContrato(dto.tipoContrato())
+                        .turnoIni(dto.turnoIni())
+                        .turnoFim(dto.turnoFim())
+                        .banco(dto.banco())
+                        .agencia(dto.agencia())
+                        .conta(dto.conta())
+                        .tipoConta(dto.tipoConta())
+                        .categoria(categoria)
+                        .build()
+        );
+
+        return toResponseDto(funcionario);
     }
 
     @Transactional
     public FuncionarioResponseDto atualizar(Integer id, FuncionarioUpdateDto dto) {
-        Funcionario funcionario = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Funcionário não encontrado"));
+        Funcionario funcionario = buscarFuncionarioPorId(id);
 
         if (!funcionario.getUser().isAtivo()) {
             throw new RegraException("Usuário desativado");
         }
 
         if (dto.cref() != null && !dto.cref().isBlank()) {
-
-            if (repository.existsByCref(dto.cref()) &&
-                    !funcionario.getCref().equals(dto.cref())) {
-                throw new ConflitoException("Cref já cadastrado");
+            if (!dto.cref().equals(funcionario.getCref())) {
+                validarFuncionarioPorCref(dto.cref());
             }
             funcionario.setCref(dto.cref());
         }
@@ -122,23 +122,61 @@ public class FuncionarioService {
         }
 
         if (dto.categoriaId() != null) {
-            Categoria categoria = categoriaRepository.findById(dto.categoriaId())
-                    .orElseThrow(() -> new NotFoundException("Categoria não encontrada"));
+            Categoria categoria = buscarCategoriaPorId(dto.categoriaId());
             funcionario.setCategoria(categoria);
         }
 
-        repository.save(funcionario);
+        funcionarioRepository.save(funcionario);
 
-        return repository.buscarFuncionarioCompleto(funcionario.getId());
-
+        return toResponseDto(funcionario);
     }
 
     @Transactional
     public void deletar(Integer id) {
 
-        Funcionario funcionario = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Funcionário não encontrado"));
+        Funcionario funcionario = buscarFuncionarioPorId(id);
 
-        repository.delete(funcionario);
+        funcionarioRepository.delete(funcionario);
+    }
+
+    public List<FuncionarioResponseDto> listar() {
+        return funcionarioRepository.findAll()
+                .stream()
+                .map(this::toResponseDto)
+                .toList();
+    }
+
+    public FuncionarioResponseDto buscarPorId(Integer id) {
+
+        return toResponseDto(buscarFuncionarioPorId(id));
+    }
+
+    private Funcionario buscarFuncionarioPorId(Integer id) {
+        return funcionarioRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Funcionario não encontrado"));
+    }
+
+    private void validarFuncionarioPorCref(String cref) {
+        if (funcionarioRepository.existsByCref(cref)) {
+            throw new ConflitoException("Cref já cadastrado");
+        }
+    }
+
+    private Categoria buscarCategoriaPorId(Integer id) {
+        return categoriaRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Categoria não encontrada"));
+    }
+
+    private FuncionarioResponseDto toResponseDto(Funcionario funcionario) {
+        return new FuncionarioResponseDto(
+                funcionario.getId(),
+                funcionario.getUser().getNome(),
+                funcionario.getCref(),
+                funcionario.getTipoContrato(),
+                funcionario.getTurnoIni(),
+                funcionario.getTurnoFim(),
+                funcionario.getCategoria().getNome(),
+                funcionario.getCategoria().getSalario()
+        );
     }
 }
