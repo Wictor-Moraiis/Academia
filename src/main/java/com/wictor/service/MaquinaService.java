@@ -13,25 +13,27 @@ import java.util.List;
 @Service
 public class MaquinaService {
 
-    private final MaquinaRepository repository;
+    private final MaquinaRepository maquinaRepository;
 
-    public MaquinaService(MaquinaRepository repository) {
-        this.repository = repository;
+    public MaquinaService(MaquinaRepository maquinaRepository) {
+        this.maquinaRepository = maquinaRepository;
     }
 
-    public Maquina cadastrar(MaquinaDto maquinaDTO) {
+    public MaquinaResponseDto cadastrar(MaquinaDto maquinaDTO) {
 
-        Maquina.MaquinaBuilder builder = Maquina.builder()
-                .nome(maquinaDTO.nome())
-                .ativa(true);
-        Maquina maquina = builder.build();
+        Maquina maquina = maquinaRepository.save(
+                Maquina.builder()
+                        .nome(maquinaDTO.nome())
+                        .ativa(true)
+                        .build()
+        );
 
-        return repository.save(maquina);
+        return toResponseDto(maquina);
     }
 
-    public Maquina atualizar(Integer id, MaquinaUpdateDto dto) {
-        Maquina maquina = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Máquina não encontrada"));
+    public MaquinaResponseDto atualizar(Integer id, MaquinaUpdateDto dto) {
+        Maquina maquina = buscarMaquinaPorId(id);
+
         if (dto.nome() != null && !dto.nome().isBlank()) {
             maquina.setNome(dto.nome());
         }
@@ -40,50 +42,53 @@ public class MaquinaService {
             maquina.setAtiva(dto.ativa());
         }
 
-        return repository.save(maquina);
+        return toResponseDto(maquinaRepository.save(maquina));
     }
 
     public List<MaquinaResponseDto> listar() {
-        return repository.findAll()
+        return maquinaRepository.findAll()
                 .stream()
-                .map(m -> new MaquinaResponseDto(
-                        m.getId(),
-                        m.getNome(),
-                        m.isAtiva()
-                ))
+                .map(this::toResponseDto)
                 .toList();
     }
 
-    public Maquina buscarPorId(Integer id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Máquina não encontrada"));
+    public MaquinaResponseDto buscarPorId(Integer id) {
+        return toResponseDto(buscarMaquinaPorId(id));
     }
 
     public void desativar(Integer id) {
-
-        Maquina maquina = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Máquina não encontrada"));
-
-        maquina.setAtiva(false);
-
-        repository.save(maquina);
+        alterarStatus(id, false);
     }
 
     public void reativar(Integer id) {
+        alterarStatus(id, true);
+    }
 
-        Maquina maquina = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Máquina não encontrada"));
+    private void alterarStatus(Integer id, boolean ativa) {
+        Maquina maquina = buscarMaquinaPorId(id);
 
-        maquina.setAtiva(true);
+        maquina.setAtiva(ativa);
 
-        repository.save(maquina);
+        maquinaRepository.save(maquina);
     }
 
     public void deletar(Integer id) {
 
-        if (!repository.existsById(id)) {
-            throw new NotFoundException("Máquina não encontrada");
-        }
-        repository.deleteById(id);
+        Maquina maquina = buscarMaquinaPorId(id);
+
+        maquinaRepository.delete(maquina);
+    }
+
+    private MaquinaResponseDto toResponseDto(Maquina maquina) {
+        return new MaquinaResponseDto(
+                maquina.getId(),
+                maquina.getNome(),
+                maquina.isAtiva()
+        );
+    }
+
+    private Maquina buscarMaquinaPorId(Integer id) {
+        return maquinaRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Máquina não encontrada"));
     }
 }

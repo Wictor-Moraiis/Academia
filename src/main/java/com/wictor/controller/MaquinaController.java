@@ -1,75 +1,73 @@
 package com.wictor.controller;
 
 import com.wictor.dto.maquina.MaquinaDto;
+import com.wictor.dto.maquina.MaquinaResponseDto;
 import com.wictor.dto.maquina.MaquinaUpdateDto;
 import com.wictor.service.MaquinaService;
-import com.wictor.model.Maquina;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/maquinas")
 public class MaquinaController {
 
-    private final MaquinaService MaquinaService;
+    private final MaquinaService maquinaService;
 
-    public MaquinaController(MaquinaService MaquinaService) {
-        this. MaquinaService =  MaquinaService;
+    public MaquinaController(MaquinaService maquinaService) {
+        this.maquinaService = maquinaService;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/create")
-    public ResponseEntity<?> cadastrar(
+    @PostMapping
+    public ResponseEntity<MaquinaResponseDto> cadastrar(
             @RequestBody @Valid MaquinaDto dto) {
 
-        Maquina novo = MaquinaService.cadastrar(dto);
-        return ResponseEntity.status(201).body(novo);
+        return ResponseEntity.status(201).body(maquinaService.cadastrar(dto));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/alterar/{id}")
-    public ResponseEntity<?> alterar(@PathVariable Integer id,
+    @PatchMapping("/{id}")
+    public ResponseEntity<MaquinaResponseDto> alterar(@PathVariable Integer id,
                                      @RequestBody @Valid MaquinaUpdateDto dto) {
 
-        Maquina maquina = MaquinaService.atualizar(id, dto);
-        return ResponseEntity.ok(maquina);
+        return ResponseEntity.ok(maquinaService.atualizar(id, dto));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/desativar/{id}")
     public ResponseEntity<?> desativar(@PathVariable Integer id) {
 
-        MaquinaService.desativar(id);
+        maquinaService.desativar(id);
         return ResponseEntity.ok(Map.of("mensagem", "Máquina desativada"));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("reativar/{id}")
+    @PatchMapping("/reativar/{id}")
     public ResponseEntity<?> reativar(@PathVariable Integer id) {
-        MaquinaService.reativar(id);
+        maquinaService.reativar(id);
         return ResponseEntity.ok(Map.of("mensagem", "Máquina reativada"));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/excluir/{id}")
-    public ResponseEntity<?> deletar(@PathVariable Integer id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
 
-        MaquinaService.deletar(id);
-        return ResponseEntity.ok(Map.of("mensagem", "Maquina excluída"));
+        maquinaService.deletar(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping
-    public ResponseEntity<?> listar() {
-        return ResponseEntity.ok(MaquinaService.listar());
+    public ResponseEntity<List<MaquinaResponseDto>> listar() {
+        return ResponseEntity.ok(maquinaService.listar());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> buscarPorId(@PathVariable Integer id) {
-        Maquina maquina = MaquinaService.buscarPorId(id);
-        return ResponseEntity.ok(maquina);
+    public ResponseEntity<MaquinaResponseDto> buscarPorId(@PathVariable Integer id) {
+        return ResponseEntity.ok(maquinaService.buscarPorId(id));
     }
 }
