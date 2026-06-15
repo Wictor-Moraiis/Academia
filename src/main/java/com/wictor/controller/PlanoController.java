@@ -1,14 +1,15 @@
 package com.wictor.controller;
 
 import com.wictor.dto.plano.PlanoDto;
+import com.wictor.dto.plano.PlanoResponseDto;
 import com.wictor.dto.plano.PlanoUpdateDto;
 import com.wictor.service.PlanoService;
-import com.wictor.model.Plano;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import java.util.Map;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/planos")
@@ -18,44 +19,41 @@ public class PlanoController {
     private final PlanoService planoService;
 
     public PlanoController(PlanoService planoService) {
-        this. planoService =  planoService;
+        this.planoService = planoService;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/create")
-    public ResponseEntity<?> cadastrar(
+    @PostMapping
+    public ResponseEntity<PlanoResponseDto> cadastrar(
             @RequestBody @Valid PlanoDto dto) {
 
-        Plano novo = planoService.cadastrar(dto);
-        return ResponseEntity.status(201).body(novo);
+        return ResponseEntity.status(201).body(planoService.cadastrar(dto));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/alterar/{id}")
-    public ResponseEntity<?> alterar(@PathVariable Integer id,
+    @PatchMapping("/{id}")
+    public ResponseEntity<PlanoResponseDto> alterar(@PathVariable Integer id,
             @RequestBody @Valid PlanoUpdateDto dto) {
 
-        Plano plano = planoService.atualizar(id, dto);
-        return ResponseEntity.ok(plano);
+        return ResponseEntity.ok(planoService.atualizar(id, dto));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/excluir/{id}")
-    public ResponseEntity<?> deletar(@PathVariable Integer id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
 
         planoService.deletar(id);
-        return ResponseEntity.ok(Map.of("mensagem", "Plano excluído"));
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping
-    public ResponseEntity<?> listar() {
+    public ResponseEntity<List<PlanoResponseDto>> listar() {
         return ResponseEntity.ok(planoService.listar());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> buscarPorId(@PathVariable Integer id) {
-        Plano plano = planoService.buscarPorId(id);
-        return ResponseEntity.ok(plano);
+    public ResponseEntity<PlanoResponseDto> buscarPorId(@PathVariable Integer id) {
+        return ResponseEntity.ok(planoService.buscarPorId(id));
     }
 
 }

@@ -3,35 +3,40 @@ package com.wictor.service;
 import com.wictor.dto.plano.PlanoDto;
 import com.wictor.dto.plano.PlanoResponseDto;
 import com.wictor.dto.plano.PlanoUpdateDto;
-import com.wictor.exception.*;
+import com.wictor.exception.NotFoundException;
 import com.wictor.model.Plano;
 import com.wictor.repository.PlanoRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
 public class PlanoService {
 
-    private final PlanoRepository repository;
+    private final PlanoRepository planoRepository;
 
-    public PlanoService(PlanoRepository repository) {
-        this.repository = repository;
+    public PlanoService(PlanoRepository planoRepository) {
+        this.planoRepository = planoRepository;
     }
 
-    public Plano cadastrar(PlanoDto planoDTO) {
+    @Transactional
+    public PlanoResponseDto cadastrar(PlanoDto planoDTO) {
 
-        Plano.PlanoBuilder builder = Plano.builder()
-                .nome(planoDTO.nome())
-                .valor(planoDTO.valor())
-                .validade(planoDTO.validade());
-        Plano plano = builder.build();
+        Plano plano = planoRepository.save(
+                Plano.builder()
+                        .nome(planoDTO.nome())
+                        .valor(planoDTO.valor())
+                        .validade(planoDTO.validade())
+                        .build()
+        );
 
-        return repository.save(plano);
+        return toResponseDto(plano);
+
     }
 
-    public Plano atualizar(Integer id, PlanoUpdateDto dto) {
-        Plano plano = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Plano não encontrado"));
+    @Transactional
+    public PlanoResponseDto atualizar(Integer id, PlanoUpdateDto dto) {
+       Plano plano = buscarPlanoPorId(id);
 
         if (dto.nome() != null && !dto.nome().isBlank()) {
             plano.setNome(dto.nome());
@@ -45,31 +50,39 @@ public class PlanoService {
             plano.setValidade(dto.validade());
         }
 
-        return repository.save(plano);
+        return toResponseDto(planoRepository.save(plano));
     }
 
     public List<PlanoResponseDto> listar() {
-        return repository.findAll()
+        return planoRepository.findAll()
                 .stream()
-                .map(p -> new PlanoResponseDto(
-                        p.getId(),
-                        p.getNome(),
-                        p.getValor(),
-                        p.getValidade()
-                ))
+                .map(this::toResponseDto)
                 .toList();
     }
 
-    public Plano buscarPorId(Integer id) {
-        return repository.findById(id)
+    private PlanoResponseDto toResponseDto(Plano plano) {
+        return new PlanoResponseDto(
+                plano.getId(),
+                plano.getNome(),
+                plano.getValor(),
+                plano.getValidade()
+        );
+    }
+
+    public PlanoResponseDto buscarPorId(Integer id) {
+        return toResponseDto(buscarPlanoPorId(id));
+    }
+
+    private Plano buscarPlanoPorId(Integer id) {
+        return planoRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Plano não encontrado"));
     }
 
+    @Transactional
     public void deletar(Integer id) {
 
-        if (!repository.existsById(id)) {
-            throw new NotFoundException("Plano não encontrado");
-        }
-        repository.deleteById(id);
+        Plano plano = buscarPlanoPorId(id);
+
+        planoRepository.delete(plano);
     }
 }
