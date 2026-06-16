@@ -40,7 +40,7 @@ public class MaquinaController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/desativar/{id}")
-    public ResponseEntity<?> desativar(@PathVariable Integer id) {
+    public ResponseEntity<Map<String, String>> desativar(@PathVariable Integer id) {
 
         maquinaService.desativar(id);
         return ResponseEntity.ok(Map.of("mensagem", "Máquina desativada"));
@@ -48,7 +48,7 @@ public class MaquinaController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/reativar/{id}")
-    public ResponseEntity<?> reativar(@PathVariable Integer id) {
+    public ResponseEntity<Map<String, String>> reativar(@PathVariable Integer id) {
         maquinaService.reativar(id);
         return ResponseEntity.ok(Map.of("mensagem", "Máquina reativada"));
     }
