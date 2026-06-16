@@ -4,7 +4,6 @@ import com.wictor.dto.treino.TreinoDto;
 import com.wictor.dto.treinoexercicio.TreinoResponseDto;
 import com.wictor.dto.treinoexercicio.TreinoUpdateDto;
 import com.wictor.service.TreinoService;
-import com.wictor.model.Treino;
 import com.wictor.model.User;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -12,85 +11,68 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/treinos")
 public class TreinoController {
 
-    private final TreinoService TreinoService;
+    private final TreinoService treinoService;
 
-    public TreinoController(TreinoService TreinoService) {
-        this.TreinoService =  TreinoService;
+    public TreinoController(TreinoService treinoService) {
+        this.treinoService = treinoService;
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @PostMapping("/create")
-    public ResponseEntity<?> cadastrar(
+    @PostMapping
+    public ResponseEntity<TreinoResponseDto> cadastrar(
             @RequestBody @Valid TreinoDto dto,
             @AuthenticationPrincipal User logado) {
 
-        Treino novo = TreinoService.cadastrar(dto, logado);
-
-        TreinoResponseDto response = new TreinoResponseDto(
-                novo.getId(),
-                novo.getNome(),
-                novo.getObjTreino(),
-                novo.getInicio(),
-                novo.getFim(),
-                novo.getCriado(),
-                novo.getModificado(),
-                novo.isAtivo(),
-                novo.getAluno() != null
-                        ? novo.getAluno().getUser().getNome()
-                        : null
-        );
-
-        return ResponseEntity.status(201).body(response);
+        return ResponseEntity.status(201).body(treinoService.cadastrar(dto, logado));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    @PatchMapping("/alterar/{id}")
-    public ResponseEntity<?> alterar(@PathVariable Integer id,
+    @PatchMapping("/{id}")
+    public ResponseEntity<TreinoResponseDto> alterar(@PathVariable Integer id,
                                      @RequestBody @Valid TreinoUpdateDto dto,
                                      @AuthenticationPrincipal User logado) {
 
-        Treino treino = TreinoService.atualizar(id, dto, logado);
-        return ResponseEntity.ok(treino);
+        return ResponseEntity.ok(treinoService.atualizar(id, dto, logado));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @PatchMapping("/desativar/{id}")
-    public ResponseEntity<?> desativar(@PathVariable Integer id,
+    public ResponseEntity<Map<String, String>> desativar(@PathVariable Integer id,
                                        @AuthenticationPrincipal User logado){
 
-        TreinoService.desativar(id, logado);
+        treinoService.desativar(id, logado);
         return ResponseEntity.ok(Map.of("mensagem", "Treino desativado"));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("reativar/{id}")
-    public ResponseEntity<?> reativar(@PathVariable Integer id) {
-        TreinoService.reativar(id);
+    @PatchMapping("/reativar/{id}")
+    public ResponseEntity<Map<String, String>> reativar(@PathVariable Integer id) {
+        treinoService.reativar(id);
         return ResponseEntity.ok(Map.of("mensagem", "Treino reativado"));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/excluir/{id}")
-    public ResponseEntity<?> deletar(@PathVariable Integer id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
 
-        TreinoService.deletar(id);
-        return ResponseEntity.ok(Map.of("mensagem", "Treino excluído"));
+        treinoService.deletar(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping
-    public ResponseEntity<?> listar() {
-        return ResponseEntity.ok(TreinoService.listar());
+    public ResponseEntity<List<TreinoResponseDto>> listar() {
+        return ResponseEntity.ok(treinoService.listar());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> buscarPorId(@PathVariable Integer id) {
-        Treino treino = TreinoService.buscarPorId(id);
-        return ResponseEntity.ok(treino);
+    public ResponseEntity<TreinoResponseDto> buscarPorId(@PathVariable Integer id) {
+        return ResponseEntity.ok(treinoService.buscarPorId(id));
     }
 }

@@ -18,35 +18,21 @@ import java.util.List;
 @Service
 public class TreinoService {
 
-    private final TreinoRepository repository;
+    private final TreinoRepository treinoRepository;
     private final AlunoRepository alunoRepository;
 
     public TreinoService(
-            TreinoRepository repository,
+            TreinoRepository treinoRepository,
             AlunoRepository alunoRepository) {
-        this.repository = repository;
+        this.treinoRepository = treinoRepository;
         this.alunoRepository = alunoRepository;
 
     }
 
-    public Treino cadastrar(TreinoDto treinoDTO, User logado) {
+    public TreinoResponseDto cadastrar(TreinoDto treinoDTO, User logado) {
 
-        Aluno aluno = null;
+        Aluno aluno = obterAluno(treinoDTO, logado);
 
-        boolean admin = logado.getRole().name().equals("ADMIN");
-
-        if (admin) {
-
-            if (treinoDTO.alunoId() != null) {
-
-                aluno = alunoRepository.findById(treinoDTO.alunoId())
-                        .orElseThrow(() ->
-                                new NotFoundException("Aluno não encontrado"));
-            }
-        } else {
-
-            aluno = logado.getAluno();
-        }
         LocalDate criado;
         LocalDate modificado;
         Boolean ativo;
@@ -57,7 +43,7 @@ public class TreinoService {
             criado = treinoDTO.criado();
         }
         if (treinoDTO.modificado() == null) {
-            modificado = treinoDTO.criado();
+            modificado = criado;
         } else {
             modificado = treinoDTO.modificado();
         }
@@ -66,36 +52,30 @@ public class TreinoService {
         } else {
             ativo = treinoDTO.ativo();
         }
+        Treino treino = treinoRepository.save(
+                Treino.builder()
+                        .nome(treinoDTO.nome())
+                        .ObjTreino(treinoDTO.ObjTreino())
+                        .inicio(treinoDTO.inicio())
+                        .fim(treinoDTO.fim())
+                        .criado(criado)
+                        .modificado(modificado)
+                        .obs(treinoDTO.obs())
+                        .ativo(ativo)
+                        .aluno(aluno)
+                        .build()
+        );
 
-        Treino.TreinoBuilder builder = Treino.builder()
-                .nome(treinoDTO.nome())
-                .ObjTreino(treinoDTO.ObjTreino())
-                .inicio(treinoDTO.inicio())
-                .fim(treinoDTO.fim())
-                .criado(criado)
-                .modificado(modificado)
-                .obs(treinoDTO.obs())
-                .inicio(treinoDTO.inicio())
-                .ativo(ativo)
-                .aluno(aluno);
+        return toResponseDto(treino);
 
-        Treino treino = builder.build();
-
-        return repository.save(treino);
     }
 
-    public Treino atualizar(Integer id, TreinoUpdateDto dto,  User logado) {
+    public TreinoResponseDto atualizar(Integer id, TreinoUpdateDto dto,  User logado) {
 
         boolean alterado = false;
-        Treino treino = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Treino não encontrado"));
-        boolean admin = logado.getRole().name().equals("ADMIN");
+        Treino treino = buscarTreinoPorId(id);
+        validarPermissao(treino, logado);
 
-        boolean dono = treino.getAluno() != null && logado.getAluno() != null && treino.getAluno().getId().equals(logado.getAluno().getId());
-
-        if (!admin && !dono) {
-            throw new AccessDeniedException("Sem permissão");
-        }
         if (dto.nome() != null && !dto.nome().isBlank()) {
             treino.setNome(dto.nome());
             alterado = true;
@@ -131,73 +111,102 @@ public class TreinoService {
             alterado = true;
         }
 
-        if (dto.ativo() != null) {
+        if (dto.ativo() != null &&
+                !dto.ativo().equals(treino.isAtivo())) {
+
             treino.setAtivo(dto.ativo());
+            alterado = true;
         }
 
         if (alterado) {
             treino.setModificado(LocalDate.now());
         }
 
-        return repository.save(treino);
+        return toResponseDto(treinoRepository.save(treino));
     }
 
     public List<TreinoResponseDto> listar() {
-        return repository.findAll()
+        return treinoRepository.findAll()
                 .stream()
-                .map(t -> new TreinoResponseDto(
-                        t.getId(),
-                        t.getNome(),
-                        t.getObjTreino(),
-                        t.getInicio(),
-                        t.getFim(),
-                        t.getCriado(),
-                        t.getModificado(),
-                        t.isAtivo(),
-                        t.getAluno() != null ? t.getAluno().getUser().getNome() : null
-                ))
+                .map(this::toResponseDto)
                 .toList();
     }
 
-    public Treino buscarPorId(Integer id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Treino não encontrado"));
+    public TreinoResponseDto buscarPorId(Integer id) {
+       return toResponseDto(buscarTreinoPorId(id));
     }
 
     public void desativar(Integer id, User logado) {
 
-        Treino treino = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Treino não encontrado"));
+        Treino treino = buscarTreinoPorId(id);
 
-        boolean admin = logado.getRole().name().equals("ADMIN");
+        validarPermissao(treino, logado);
 
-        boolean dono = treino.getAluno() != null && logado.getAluno() != null && treino.getAluno().getId().equals(logado.getAluno().getId());
-
-        if (!admin && !dono) {
-            throw new AccessDeniedException("Sem permissão");
-        }
-
-        treino.setAtivo(false);
-        treino.setAluno(null);
-
-        repository.save(treino);
+        alterarStatus(id, false);
     }
 
     public void reativar(Integer id) {
+        alterarStatus(id, true);
+    }
 
-        Treino treino = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Treino não encontrado"));
+    private void alterarStatus(Integer id, boolean ativo) {
+        Treino treino = buscarTreinoPorId(id);
 
-        treino.setAtivo(true);
+        treino.setAtivo(ativo);
 
-        repository.save(treino);
+        treinoRepository.save(treino);
     }
 
     public void deletar(Integer id) {
 
-        if (!repository.existsById(id)) {
-            throw new NotFoundException("Treino não encontrado");
+       Treino treino = buscarTreinoPorId(id);
+
+        treinoRepository.delete(treino);
+    }
+
+    private TreinoResponseDto toResponseDto(Treino treino) {
+        return new TreinoResponseDto(
+                treino.getId(),
+                treino.getNome(),
+                treino.getObjTreino(),
+                treino.getInicio(),
+                treino.getFim(),
+                treino.getCriado(),
+                treino.getModificado(),
+                treino.isAtivo(),
+                treino.getAluno() != null ? treino.getAluno().getUser().getNome() : null
+        );
+    }
+
+    private Treino buscarTreinoPorId(Integer id) {
+        return treinoRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Treino não encontrado"));
+    }
+
+    private void validarPermissao(Treino treino, User logado) {
+
+        boolean admin = logado.getRole().name().equals("ADMIN");
+
+        boolean dono =
+                treino.getAluno() != null &&
+                        logado.getAluno() != null &&
+                        treino.getAluno().getId().equals(logado.getAluno().getId());
+
+        if (!admin && !dono) {
+            throw new AccessDeniedException("Sem permissão");
         }
-        repository.deleteById(id);
+    }
+
+    private Aluno obterAluno(TreinoDto dto, User logado) {
+
+        boolean admin = logado.getRole().name().equals("ADMIN");
+
+        if (admin && dto.alunoId() != null) {
+            return alunoRepository.findById(dto.alunoId())
+                    .orElseThrow(() ->
+                            new NotFoundException("Aluno não encontrado"));
+        }
+
+        return logado.getAluno();
     }
 }
