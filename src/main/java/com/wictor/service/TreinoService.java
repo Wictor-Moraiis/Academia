@@ -1,8 +1,8 @@
 package com.wictor.service;
 
 import com.wictor.dto.treino.TreinoDto;
-import com.wictor.dto.treinoexercicio.TreinoResponseDto;
-import com.wictor.dto.treinoexercicio.TreinoUpdateDto;
+import com.wictor.dto.treino.TreinoResponseDto;
+import com.wictor.dto.treino.TreinoUpdateDto;
 import com.wictor.exception.NotFoundException;
 import com.wictor.model.Aluno;
 import com.wictor.model.Treino;

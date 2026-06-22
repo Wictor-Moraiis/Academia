@@ -1,7 +1,7 @@
 package com.wictor.service;
 
-import com.wictor.dto.treino.TreinoExercicioDto;
-import com.wictor.dto.treino.TreinoExercicioResponseDto;
+import com.wictor.dto.treinoexercicio.TreinoExercicioDto;
+import com.wictor.dto.treinoexercicio.TreinoExercicioResponseDto;
 import com.wictor.dto.treinoexercicio.TreinoExercicioUpdateDto;
 import com.wictor.exception.NotFoundException;
 import com.wictor.model.*;
@@ -16,16 +16,16 @@ import java.util.List;
 @Service
 public class TreinoExercicioService {
 
-    private final TreinoExercicioRepository repository;
+    private final TreinoExercicioRepository treinoexercicioRepository;
     private final TreinoRepository treinoRepository;
     private final ExercicioRepository exercicioRepository;
 
     public TreinoExercicioService(
-            TreinoExercicioRepository repository,
+            TreinoExercicioRepository treinoexercicioRepository,
             TreinoRepository treinoRepository,
             ExercicioRepository exercicioRepository) {
 
-        this.repository = repository;
+        this.treinoexercicioRepository = treinoexercicioRepository;
         this.treinoRepository = treinoRepository;
         this.exercicioRepository = exercicioRepository;
     }
@@ -42,7 +42,7 @@ public class TreinoExercicioService {
             throw new AccessDeniedException("Sem permissão");
         }
     }
-    public TreinoExercicio cadastrar(TreinoExercicioDto dto, User logado) {
+    public TreinoExercicioResponseDto cadastrar(TreinoExercicioDto dto, User logado) {
         Treino treino = treinoRepository.findById(dto.treinoId())
                 .orElseThrow(() -> new NotFoundException("Treino não encontrado"));
 
@@ -67,13 +67,16 @@ public class TreinoExercicioService {
                 .obs(dto.obs())
                 .build();
 
-        return repository.save(treinoExercicio);
+        TreinoExercicio salvo = treinoexercicioRepository.save(treinoExercicio);
+
+        return toResponseDto(salvo);
     }
 
-    public TreinoExercicio atualizar(TreinoExercicioId id, TreinoExercicioUpdateDto dto, User logado) {
-        TreinoExercicio treinoExercicio = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Exercício do treino não encontrado"));
+    public TreinoExercicioResponseDto atualizar(TreinoExercicioId id, TreinoExercicioUpdateDto dto, User logado) {
+        TreinoExercicio treinoExercicio = buscarTreinoExercicioPorId(id);
+
         validarPermissao(treinoExercicio.getTreino(), logado);
+
         if (dto.ordem() != null) {
             treinoExercicio.setOrdem(dto.ordem());
         }
@@ -94,40 +97,46 @@ public class TreinoExercicioService {
             treinoExercicio.setObs(dto.obs());
         }
 
-        return repository.save(treinoExercicio);
+        return toResponseDto(treinoexercicioRepository.save(treinoExercicio));
     }
 
     public List<TreinoExercicioResponseDto> listar() {
-        return repository.findAll()
+        return treinoexercicioRepository.findAll()
                 .stream()
-                .map(te -> new TreinoExercicioResponseDto(
-                        te.getTreino().getId(),
-                        te.getTreino().getNome(),
-                        te.getExercicio().getId(),
-                        te.getExercicio().getNome(),
-                        te.getOrdem(),
-                        te.getCarga(),
-                        te.getSeries(),
-                        te.getRep(),
-                        te.getObs()
-                ))
+                .map(this::toResponseDto)
                 .toList();
     }
 
-    public TreinoExercicio buscarPorId(TreinoExercicioId id) {
-
-        TreinoExercicio te = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Exercício do treino não encontrado"));
-        return te;
+    public TreinoExercicioResponseDto buscarPorId(TreinoExercicioId id) {
+        return toResponseDto(buscarTreinoExercicioPorId(id));
     }
 
     public void deletar(TreinoExercicioId id, User logado){
-        TreinoExercicio treinoExercicio = repository.findById(id)
-                .orElseThrow(() ->
-                        new NotFoundException("Exercício do treino não encontrado"));
+        TreinoExercicio treinoExercicio = buscarTreinoExercicioPorId(id);
 
         validarPermissao(treinoExercicio.getTreino(), logado);
 
-        repository.delete(treinoExercicio);
+        treinoexercicioRepository.delete(treinoExercicio);
     }
+
+    private TreinoExercicioResponseDto toResponseDto(TreinoExercicio treinoExercicio) {
+        return new TreinoExercicioResponseDto(
+                treinoExercicio.getTreino().getId(),
+                treinoExercicio.getTreino().getNome(),
+                treinoExercicio.getExercicio().getId(),
+                treinoExercicio.getExercicio().getNome(),
+                treinoExercicio.getOrdem(),
+                treinoExercicio.getCarga(),
+                treinoExercicio.getSeries(),
+                treinoExercicio.getRep(),
+                treinoExercicio.getObs()
+        );
+    }
+
+    private TreinoExercicio buscarTreinoExercicioPorId(TreinoExercicioId id) {
+        return treinoexercicioRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Exercicio no treino não encontrado"));
+    }
+
+
 }
