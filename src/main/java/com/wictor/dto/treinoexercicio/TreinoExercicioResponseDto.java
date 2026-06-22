@@ -1,4 +1,4 @@
-package com.wictor.dto.treino;
+package com.wictor.dto.treinoexercicio;
 
 public record TreinoExercicioResponseDto (
 

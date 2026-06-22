@@ -1,4 +1,4 @@
-package com.wictor.dto.treino;
+package com.wictor.dto.treinoexercicio;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
