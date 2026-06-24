@@ -1,95 +1,102 @@
 package com.wictor.controller;
 
-import com.wictor.dto.LoginDto;
+import com.wictor.dto.login.LoginDto;
+import com.wictor.dto.login.LoginResponseDto;
 import com.wictor.dto.user.UserDto;
+import com.wictor.dto.user.UserResponseDto;
 import com.wictor.dto.user.UserRoleUpdateDto;
 import com.wictor.dto.user.UserUpdateDto;
-import com.wictor.security.JwtService;
-import com.wictor.exception.UnauthorizedException;
+import com.wictor.service.JwtService;
 import com.wictor.model.User;
 import com.wictor.service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/users")
 public class UserController {
 
-    @Autowired
-    private JwtService jwtService;
-
     private final UserService userService;
+    private final JwtService jwtService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, JwtService jwtService) {
         this.userService = userService;
+        this.jwtService = jwtService;
     }
 
-    @PostMapping(value = "/users", consumes = "multipart/form-data")
-    public ResponseEntity<?> cadastrar(
+    @PostMapping(consumes = "multipart/form-data")
+    public ResponseEntity<UserResponseDto> cadastrar(
             @RequestPart("dados") @Valid UserDto dto,
             @RequestPart(value = "foto", required = false) MultipartFile foto,
             @AuthenticationPrincipal User logado) {
 
-        User novo = userService.cadastrar(dto, foto, logado);
-        return ResponseEntity.status(201).body(novo);
+        return ResponseEntity.status(201).body(userService.cadastrar(dto,foto,logado));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginDto dto) {
+    public ResponseEntity<LoginResponseDto> login(@RequestBody LoginDto dto) {
         User user = userService.autenticar(dto.cpf(), dto.senha());
-        if (user == null) throw new UnauthorizedException("CPF ou senha inválidos");
-
         String token = jwtService.gerarToken(user);
-        return ResponseEntity.ok(Map.of("token", token, "id", user.getId()));
+        return ResponseEntity.ok(new LoginResponseDto(token, user.getId()));
     }
 
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
-    @PatchMapping(value = "/users/{id}", consumes = "multipart/form-data")
-    public ResponseEntity<?> atualizar(@PathVariable Integer id,
+    @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
+    public ResponseEntity<UserResponseDto> atualizar(@PathVariable Integer id,
                                        @RequestPart("dados") @Valid UserUpdateDto dto,
                                        @RequestPart(value = "foto", required = false) MultipartFile foto) {
 
-        User user = userService.atualizar(id, dto, foto);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(userService.atualizar(id, dto, foto));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/users/{id}/role")
-    public ResponseEntity<?> atualizarRole(@PathVariable Integer id,
+    @PatchMapping("/role/{id}")
+    public ResponseEntity<UserResponseDto> atualizarRole(@PathVariable Integer id,
                                            @RequestBody UserRoleUpdateDto dto) {
 
-        User user = userService.atualizarRole(id, dto);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(userService.atualizarRole(id,dto));
     }
 
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
-    @PatchMapping("/users/{id}/desativar")
-    public ResponseEntity<?> desativar(@PathVariable Integer id) {
+    @PatchMapping("/desativar/{id}")
+    public ResponseEntity<Map<String, String>> desativar(@PathVariable Integer id) {
 
         userService.desativar(id);
         return ResponseEntity.ok(Map.of("mensagem", "Usuário desativado"));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/users/{id}/reativar")
-    public ResponseEntity<?> reativar(@PathVariable Integer id) {
+    @PatchMapping("/reativar/{id}")
+    public ResponseEntity<Map<String, String>> reativar(@PathVariable Integer id) {
         userService.reativar(id);
         return ResponseEntity.ok(Map.of("mensagem", "Usuário reativado"));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/users/{id}")
-    public ResponseEntity<?> deletar(@PathVariable Integer id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
 
         userService.deletar(id);
-        return ResponseEntity.ok(Map.of("mensagem", "Usuário excluído"));
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping
+    public ResponseEntity<List<UserResponseDto>> listar() {
+        return ResponseEntity.ok(userService.listar());
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponseDto> buscarPorId(@PathVariable Integer id) {
+        return ResponseEntity.ok(userService.buscarPorId(id));
     }
 
 }

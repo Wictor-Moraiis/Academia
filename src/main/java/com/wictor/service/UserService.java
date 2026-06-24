@@ -1,12 +1,10 @@
 package com.wictor.service;
 
 import com.wictor.dto.user.UserDto;
+import com.wictor.dto.user.UserResponseDto;
 import com.wictor.dto.user.UserRoleUpdateDto;
 import com.wictor.dto.user.UserUpdateDto;
-import com.wictor.security.PasswordService;
-import com.wictor.security.CpfService;
 import com.wictor.enums.Role;
-import com.wictor.enums.Sexo;
 import com.wictor.enums.Tipo;
 import com.wictor.exception.*;
 import com.wictor.model.User;
@@ -14,73 +12,44 @@ import com.wictor.repository.UserRepository;
 import com.wictor.util.AgeValidator;
 import com.wictor.util.CpfValidator;
 import com.wictor.util.NumberValidator;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+
+import java.util.List;
 
 @Service
 public class UserService {
 
-    private final UserRepository repository;
+    private final UserRepository userRepository;
+    private final ImageService imageService;
 
-    public UserService(UserRepository repository) {
-        this.repository = repository;
+    public UserService(UserRepository userRepository, ImageService imageService)
+    {
+        this.userRepository = userRepository;
+        this.imageService = imageService;
     }
 
     @Value("${file.upload-dir-user}")
     private String uploadDir;
-    int maximumSizeMB = 5000000;
+    private static final String PREFIXO_IMAGEM  = "user";
 
-
-    @Bean
-    public CommandLineRunner init(UserRepository repository) {
-        return args -> {
-            if (repository.count() == 0) {
-
-                User admin = User.builder()
-                        .nome("Admin")
-                        .cpf(CpfService.Criptografia("12345678900"))
-                        .senha(PasswordService.Criptografia("admin123"))
-                        .email1("admin@adm.com")
-                        .tel1("11912345678")
-                        .sexo(Sexo.M)
-                        .cep("12345678")
-                        .bairro("Jardim Adm")
-                        .rua("Rua Administrador")
-                        .numeroCasa(1)
-                        .datanasc(java.time.LocalDate.of(1990, 1, 1))
-                        .role(Role.ADMIN)
-                        .tipo(Tipo.FUNCIONARIO)
-                        .ativo(true)
-                        .build();
-
-                repository.save(admin);
-
-                System.out.println("Admin inicial criado!");
-            }
-        };
-    }
-
-    public User cadastrar(UserDto userDTO, MultipartFile foto, User logado) {
+    @Transactional
+    public UserResponseDto cadastrar(UserDto userDTO, MultipartFile foto, User logado) {
 
         String cpfCript = CpfService.Criptografia(userDTO.cpf());
         String tel1 = NumberValidator.limpar(userDTO.tel1());
         String tel2 = NumberValidator.limpar(userDTO.tel2());
 
 
-        if (repository.existsByCpf(cpfCript)) {
+        if (userRepository.existsByCpf(cpfCript)) {
             throw new ConflitoException("CPF já cadastrado");
         }
-        if (repository.existsByEmail1(userDTO.email1())) {
+        if (userRepository.existsByEmail1(userDTO.email1())) {
             throw new ConflitoException("Email já cadastrado");
         }
-        if (repository.existsByTel1(tel1)) {
+        if (userRepository.existsByTel1(tel1)) {
             throw new ConflitoException("Telefone já cadastrado");
         }
         if (!CpfValidator.validar(userDTO.cpf())) {
@@ -119,41 +88,18 @@ public class UserService {
         }
         User user = builder.build();
 
-        User savedUser = repository.save(user);
-        Integer lastId = savedUser.getId();
+        User savedUser = userRepository.save(user);
 
-        if (foto != null && !foto.isEmpty()) {
-            String tipo = foto.getContentType();
+        atualizarFoto(savedUser, foto);
 
-            if (tipo == null || !tipo.startsWith("image/")) {
-                throw new InvalidImageException("Arquivo não é uma imagem válida");
-            }
-
-            if (foto.getSize() > maximumSizeMB) {
-                throw new SizeException("A imagem é muito grande. Tamanho máximo é de 5 MB");
-            }
-
-            String newName = "user_" + lastId + ".png";
-            byte[] fotoBytes;
-            Path basePath = Paths.get(uploadDir);
-            Path finalPath = basePath.resolve(newName);
-            try {
-                fotoBytes = foto.getBytes();
-                Files.write(finalPath, fotoBytes);
-            } catch (IOException e) {
-                throw new InternalErrorException("Erro ao salvar imagem");
-            }
-            savedUser.setFoto("User_img/" + newName);
-            repository.save(savedUser);
-        }
-        return savedUser;
+        return toResponseDto(savedUser);
     }
 
     public User autenticar(String cpf, String senhaDigitada) {
 
         String cpfCript = CpfService.Criptografia(cpf);
 
-        User user = repository.findByCpf(cpfCript)
+        User user = userRepository.findByCpf(cpfCript)
                 .orElseThrow(() -> new RegraException("CPF ou senha inválidos"));
 
         boolean senhaValida = PasswordService.verificarSenha(
@@ -161,9 +107,7 @@ public class UserService {
                 user.getSenha()
         );
 
-        if (!user.isAtivo()) {
-            throw new RegraException("Usuário desativado");
-        }
+        validarAtivo(user);
 
         if (!senhaValida) {
             throw new RegraException("CPF ou senha inválidos");
@@ -172,13 +116,11 @@ public class UserService {
         return user;
     }
 
-    public User atualizar(Integer id, UserUpdateDto dto, MultipartFile foto) {
-        User user = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
+    @Transactional
+    public UserResponseDto atualizar(Integer id, UserUpdateDto dto, MultipartFile foto) {
+        User user = buscarUserPorId(id);
 
-        if (!user.isAtivo()) {
-            throw new RegraException("Usuário desativado");
-        }
+        validarAtivo(user);
 
         if (dto.cpf() != null && !dto.cpf().isBlank()) {
             if (!CpfValidator.validar(dto.cpf())) {
@@ -187,7 +129,7 @@ public class UserService {
 
             String Cpfcript = CpfService.Criptografia(dto.cpf());
             if (!Cpfcript.equals(user.getCpf()) &&
-                    repository.existsByCpf(Cpfcript)) {
+                    userRepository.existsByCpf(Cpfcript)) {
                 throw new ConflitoException("CPF já cadastrado");
             }
 
@@ -203,7 +145,7 @@ public class UserService {
         }
 
         if (dto.email1() != null && !dto.email1().isBlank()) {
-            if (repository.existsByEmail1(dto.email1())) {
+            if (userRepository.existsByEmail1(dto.email1())) {
                 throw new ConflitoException("Email já cadastrado");
             }
             user.setEmail1(dto.email1());
@@ -217,7 +159,7 @@ public class UserService {
 
             String telLimpo = NumberValidator.limpar(dto.tel1());
 
-            if (repository.existsByTel1(telLimpo)) {
+            if (userRepository.existsByTel1(telLimpo)) {
                 throw new ConflitoException("Telefone já cadastrado");
             }
             user.setTel1(telLimpo);
@@ -260,40 +202,15 @@ public class UserService {
             user.setDatanasc(dto.datanasc());
         }
 
-        if (foto != null && !foto.isEmpty()) {
-            String tipo = foto.getContentType();
-
-            if (tipo == null || !tipo.startsWith("image/")) {
-                throw new InvalidImageException("Arquivo não é uma imagem válida");
-            }
-
-            if (foto.getSize() > maximumSizeMB) {
-                throw new SizeException("A imagem é muito grande. Tamanho máximo é de 5 MB");
-            }
-
-            String newName = "user_" + user.getId() + ".png";
-            byte[] fotoBytes;
-            Path basePath = Paths.get(uploadDir);
-            Path finalPath = basePath.resolve(newName);
-            try {
-                fotoBytes = foto.getBytes();
-                Files.write(finalPath, fotoBytes);
-            } catch (IOException e) {
-                throw new InternalErrorException("Erro ao salvar imagem");
-            }
-            user.setFoto("User_img/" + newName);
-        }
-        return repository.save(user);
-
+        atualizarFoto(user, foto);
+        userRepository.save(user);
+        return toResponseDto(user);
     }
 
-    public User atualizarRole(Integer id, UserRoleUpdateDto dto) {
-        User user = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
+    public UserResponseDto atualizarRole(Integer id, UserRoleUpdateDto dto) {
+        User user = buscarUserPorId(id);
 
-        if (!user.isAtivo()) {
-            throw new RegraException("Usuário desativado");
-        }
+       validarAtivo(user);
 
         if (dto.role() != null) {
             user.setRole(dto.role());
@@ -302,43 +219,95 @@ public class UserService {
         if (dto.tipo() != null) {
             user.setTipo(dto.tipo());
         }
-        return repository.save(user);
+        return toResponseDto(userRepository.save(user));
     }
 
     public void desativar(Integer id) {
-
-        User user = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
-
-        user.setAtivo(false);
-
-        repository.save(user);
+        alterarStatus(id, false);
     }
 
     public void reativar(Integer id) {
-
-        User user = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
-
-        user.setAtivo(true);
-
-        repository.save(user);
+        alterarStatus(id, true);
     }
 
+    private void alterarStatus(Integer id, boolean ativo) {
+        User user = buscarUserPorId(id);
+
+        user.setAtivo(ativo);
+
+        userRepository.save(user);
+    }
+
+    @Transactional
     public void deletar(Integer id) {
 
-        User user = repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
-        if (user.getFoto() != null) {
-            try {
-                Path path = Paths.get(user.getFoto());
-                Files.deleteIfExists(path);
+        User user = buscarUserPorId(id);
 
-            } catch (IOException e) {
-                System.err.println("Falha ao deletar a imagem: " + e.getMessage());
-            }
+        imageService.deletarImagem(uploadDir, user.getFoto());
+
+        userRepository.deleteById(id);
+    }
+
+    public List<UserResponseDto> listar() {
+
+        return userRepository.findAll()
+                .stream()
+                .map(this::toResponseDto)
+                .toList();
+    }
+
+    public UserResponseDto buscarPorId(Integer id) {
+
+        return toResponseDto(buscarUserPorId(id));
+    }
+
+    private User buscarUserPorId(Integer id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
+    }
+
+    private UserResponseDto toResponseDto(User user) {
+        return new UserResponseDto(
+                user.getNome(),
+                user.getEmail1(),
+                user.getEmail2(),
+                user.getTel1(),
+                user.getTel2(),
+                user.getSexo(),
+                user.getCep(),
+                user.getBairro(),
+                user.getRua(),
+                user.getNumeroCasa(),
+                user.getComp(),
+                user.getDatanasc(),
+                user.getRole(),
+                user.getTipo()
+        );
+    }
+
+    private void atualizarFoto(User user, MultipartFile foto) {
+
+        if (foto == null || foto.isEmpty()) {
+            return;
         }
 
-        repository.deleteById(id);
+        imageService.validarImagem(foto);
+
+        user.setFoto(
+                imageService.salvarImagem(
+                        foto,
+                        user.getId(),
+                        uploadDir,
+                        PREFIXO_IMAGEM
+                )
+        );
     }
+
+    private void validarAtivo(User user) {
+
+        if (!user.isAtivo()) {
+            throw new RegraException("Usuário desativado");
+        }
+    }
+
 }
