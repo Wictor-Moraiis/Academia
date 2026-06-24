@@ -3,10 +3,7 @@ package com.wictor.service;
 import com.wictor.dto.exercicio.ExercicioDto;
 import com.wictor.dto.exercicio.ExercicioResponseDto;
 import com.wictor.dto.exercicio.ExercicioUpdateDto;
-import com.wictor.exception.InternalErrorException;
-import com.wictor.exception.InvalidImageException;
 import com.wictor.exception.NotFoundException;
-import com.wictor.exception.SizeException;
 import com.wictor.model.Exercicio;
 import com.wictor.model.Maquina;
 import com.wictor.repository.ExercicioRepository;
@@ -16,10 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 @Service
@@ -27,16 +20,19 @@ public class ExercicioService {
 
     private final ExercicioRepository exercicioRepository;
     private final MaquinaRepository maquinaRepository;
+    private final ImageService imageService;
 
     @Value("${file.upload-dir-exercicio}")
     private String uploadDir;
-    private static final long MAX_FILE_SIZE = 5_000_000;
+    private static final String PREFIXO_IMAGEM  = "exercicio";
 
     public ExercicioService(ExercicioRepository exercicioRepository,
-                            MaquinaRepository maquinaRepository) {
+                            MaquinaRepository maquinaRepository,
+                            ImageService imageService) {
 
         this.exercicioRepository = exercicioRepository;
         this.maquinaRepository = maquinaRepository;
+        this.imageService = imageService;
     }
 
     @Transactional
@@ -57,16 +53,7 @@ public class ExercicioService {
 
         Exercicio savedExercicio = exercicioRepository.save(exercicio);
 
-        if (foto != null && !foto.isEmpty()) {
-
-            validarImagem(foto);
-
-            savedExercicio.setFoto(
-                    salvarImagem(foto, savedExercicio.getId())
-            );
-
-            exercicioRepository.save(savedExercicio);
-        }
+        atualizarFoto(savedExercicio, foto);
         return toResponseDto(savedExercicio);
     }
 
@@ -88,14 +75,8 @@ public class ExercicioService {
             exercicio.setMaquina(maquina);
         }
 
-        if (foto != null && !foto.isEmpty()) {
+        atualizarFoto(exercicio, foto);
 
-            validarImagem(foto);
-
-            exercicio.setFoto(
-                    salvarImagem(foto, exercicio.getId())
-            );
-        }
         return toResponseDto(exercicio);
     }
 
@@ -132,52 +113,26 @@ public class ExercicioService {
     public void deletar(Integer id) {
 
         Exercicio exercicio = buscarExercicioPorId(id);
-
-        if (exercicio.getFoto() != null) {
-            try {
-                Path path = Paths.get(uploadDir)
-                        .resolve(exercicio.getFoto());
-                Files.deleteIfExists(path);
-
-            }catch (IOException e) {
-                throw new InternalErrorException("Erro ao deletar imagem");
-            }
-        }
+        imageService.deletarImagem(uploadDir, exercicio.getFoto());
         exercicioRepository.delete(exercicio);
     }
 
-    private void validarImagem(MultipartFile foto) {
+    private void atualizarFoto(Exercicio exercicio, MultipartFile foto) {
 
-        String tipo = foto.getContentType();
-
-        if (tipo == null || !tipo.startsWith("image/")) {
-            throw new InvalidImageException("Arquivo não é uma imagem válida");
+        if (foto == null || foto.isEmpty()) {
+            return;
         }
 
-        if (foto.getSize() > MAX_FILE_SIZE) {
-            throw new SizeException("A imagem é muito grande. Tamanho máximo é de 5 MB");
-        }
-    }
+        imageService.validarImagem(foto);
 
-    private String salvarImagem(MultipartFile foto, Integer id) {
-
-        Path basePath = Paths.get(uploadDir);
-
-        try {
-            Files.createDirectories(basePath);
-
-            String fileName = "exercicio_" + id + ".png";
-
-            Files.write(
-                    basePath.resolve(fileName),
-                    foto.getBytes()
-            );
-
-            return fileName;
-
-        } catch (IOException e) {
-            throw new InternalErrorException("Erro ao salvar imagem");
-        }
+        exercicio.setFoto(
+                imageService.salvarImagem(
+                        foto,
+                        exercicio.getId(),
+                        uploadDir,
+                        PREFIXO_IMAGEM
+                )
+        );
     }
 }
 
