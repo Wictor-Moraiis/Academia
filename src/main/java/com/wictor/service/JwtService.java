@@ -1,4 +1,4 @@
-package com.wictor.security;
+package com.wictor.service;
 
 import com.wictor.model.User;
 import io.jsonwebtoken.Jwts;

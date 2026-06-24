@@ -2,6 +2,7 @@ package com.wictor.security;
 
 import com.wictor.model.User;
 import com.wictor.repository.UserRepository;
+import com.wictor.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

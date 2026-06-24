@@ -1,4 +1,4 @@
-package com.wictor.security;
+package com.wictor.service;
 
 import javax.crypto.Cipher;
 import java.nio.charset.StandardCharsets;

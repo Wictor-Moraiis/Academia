@@ -1,9 +1,10 @@
 package com.wictor.dto.user;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.wictor.enums.Sexo;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
+
+import java.time.LocalDate;
 
 public record UserUpdateDto(
         @Pattern(regexp = "\\d{11}|\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}",
@@ -37,6 +38,5 @@ public record UserUpdateDto(
         String rua,
         Integer numeroCasa,
         String comp,
-        @JsonFormat(pattern = "dd/MM/yyyy")
-        java.time.LocalDate datanasc
+        LocalDate datanasc
 ) {}

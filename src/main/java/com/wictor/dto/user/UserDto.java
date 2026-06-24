@@ -1,6 +1,5 @@
 package com.wictor.dto.user;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.wictor.enums.Role;
 import com.wictor.enums.Sexo;
 import com.wictor.enums.Tipo;
@@ -8,6 +7,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+
+import java.time.LocalDate;
 
 public record UserDto(
         @NotBlank(message = "Cpf é obrigatório")
@@ -50,9 +51,8 @@ public record UserDto(
         @NotNull(message = "Número de residência é obrigatório")
         Integer numeroCasa,
          String comp,
-        @JsonFormat(pattern = "dd/MM/yyyy")
         @NotNull(message = "Data de nascimento é obrigatória")
-        java.time.LocalDate datanasc,
+        LocalDate datanasc,
         Role role,
         Tipo tipo
 ) {}

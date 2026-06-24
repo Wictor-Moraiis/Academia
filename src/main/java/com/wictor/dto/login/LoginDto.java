@@ -1,4 +1,4 @@
-package com.wictor.dto;
+package com.wictor.dto.login;
 
 public record LoginDto(
         String cpf,
