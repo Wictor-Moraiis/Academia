@@ -9,6 +9,7 @@ import com.wictor.model.Treino;
 import com.wictor.model.User;
 import com.wictor.repository.AlunoRepository;
 import com.wictor.repository.TreinoRepository;
+import com.wictor.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -20,18 +21,21 @@ public class TreinoService {
 
     private final TreinoRepository treinoRepository;
     private final AlunoRepository alunoRepository;
+    private final UserRepository userRepository;
 
     public TreinoService(
             TreinoRepository treinoRepository,
-            AlunoRepository alunoRepository) {
+            AlunoRepository alunoRepository,
+            UserRepository userRepository) {
+
         this.treinoRepository = treinoRepository;
         this.alunoRepository = alunoRepository;
-
+        this.userRepository = userRepository;
     }
 
-    public TreinoResponseDto cadastrar(TreinoDto treinoDTO, User logado) {
+    public TreinoResponseDto cadastrar(TreinoDto treinoDTO, Integer userId) {
 
-        Aluno aluno = obterAluno(treinoDTO, logado);
+        Aluno aluno = obterAluno(treinoDTO, userId);
 
         LocalDate criado;
         LocalDate modificado;
@@ -70,11 +74,11 @@ public class TreinoService {
 
     }
 
-    public TreinoResponseDto atualizar(Integer id, TreinoUpdateDto dto,  User logado) {
+    public TreinoResponseDto atualizar(Integer id, TreinoUpdateDto dto,  Integer userId) {
 
         boolean alterado = false;
         Treino treino = buscarTreinoPorId(id);
-        validarPermissao(treino, logado);
+        validarPermissao(treino, userId);
 
         if (dto.nome() != null && !dto.nome().isBlank()) {
             treino.setNome(dto.nome());
@@ -136,11 +140,11 @@ public class TreinoService {
        return toResponseDto(buscarTreinoPorId(id));
     }
 
-    public void desativar(Integer id, User logado) {
+    public void desativar(Integer id, Integer userId) {
 
         Treino treino = buscarTreinoPorId(id);
 
-        validarPermissao(treino, logado);
+        validarPermissao(treino, userId);
 
         alterarStatus(id, false);
     }
@@ -183,28 +187,31 @@ public class TreinoService {
                 .orElseThrow(() -> new NotFoundException("Treino não encontrado"));
     }
 
-    private void validarPermissao(Treino treino, User logado) {
+    private void validarPermissao(Treino treino, Integer userId) {
+
+        User logado = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
 
         boolean admin = logado.getRole().name().equals("ADMIN");
 
-        boolean dono =
-                treino.getAluno() != null &&
-                        logado.getAluno() != null &&
-                        treino.getAluno().getId().equals(logado.getAluno().getId());
+        boolean dono = treino.getAluno() != null &&
+                treino.getAluno().getUser().getId().equals(userId);
 
         if (!admin && !dono) {
             throw new AccessDeniedException("Sem permissão");
         }
     }
 
-    private Aluno obterAluno(TreinoDto dto, User logado) {
+    private Aluno obterAluno(TreinoDto dto, Integer userId) {
+
+        User logado = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
 
         boolean admin = logado.getRole().name().equals("ADMIN");
 
         if (admin && dto.alunoId() != null) {
             return alunoRepository.findById(dto.alunoId())
-                    .orElseThrow(() ->
-                            new NotFoundException("Aluno não encontrado"));
+                    .orElseThrow(() -> new NotFoundException("Aluno não encontrado"));
         }
 
         return logado.getAluno();

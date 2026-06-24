@@ -3,6 +3,7 @@ package com.wictor.controller;
 import com.wictor.dto.treino.TreinoDto;
 import com.wictor.dto.treino.TreinoResponseDto;
 import com.wictor.dto.treino.TreinoUpdateDto;
+import com.wictor.security.CustomUserDetails;
 import com.wictor.service.TreinoService;
 import com.wictor.model.User;
 import jakarta.validation.Valid;
@@ -24,30 +25,31 @@ public class TreinoController {
         this.treinoService = treinoService;
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
     @PostMapping
     public ResponseEntity<TreinoResponseDto> cadastrar(
             @RequestBody @Valid TreinoDto dto,
-            @AuthenticationPrincipal User logado) {
+            @AuthenticationPrincipal CustomUserDetails user) {
 
-        return ResponseEntity.status(201).body(treinoService.cadastrar(dto, logado));
+        return ResponseEntity.status(201)
+                .body(treinoService.cadastrar(dto, user.getId()));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
     @PatchMapping("/{id}")
     public ResponseEntity<TreinoResponseDto> alterar(@PathVariable Integer id,
                                      @RequestBody @Valid TreinoUpdateDto dto,
-                                     @AuthenticationPrincipal User logado) {
+                                                     @AuthenticationPrincipal CustomUserDetails user) {
 
-        return ResponseEntity.ok(treinoService.atualizar(id, dto, logado));
+        return ResponseEntity.ok(treinoService.atualizar(id, dto, user.getId()));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
     @PatchMapping("/desativar/{id}")
     public ResponseEntity<Map<String, String>> desativar(@PathVariable Integer id,
-                                       @AuthenticationPrincipal User logado){
+                                                         @AuthenticationPrincipal CustomUserDetails user){
 
-        treinoService.desativar(id, logado);
+        treinoService.desativar(id, user.getId());
         return ResponseEntity.ok(Map.of("mensagem", "Treino desativado"));
     }
 
