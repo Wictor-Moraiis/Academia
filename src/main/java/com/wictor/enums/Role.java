@@ -2,5 +2,8 @@ package com.wictor.enums;
 
 public enum Role {
     ADMIN,
-    USER
+    GERENTE,
+    RECEPCIONISTA,
+    PROFESSOR,
+    ALUNO
 }
