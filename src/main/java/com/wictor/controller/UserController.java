@@ -6,6 +6,7 @@ import com.wictor.dto.user.UserDto;
 import com.wictor.dto.user.UserResponseDto;
 import com.wictor.dto.user.UserRoleUpdateDto;
 import com.wictor.dto.user.UserUpdateDto;
+import com.wictor.security.CustomUserDetails;
 import com.wictor.service.JwtService;
 import com.wictor.model.User;
 import com.wictor.service.UserService;
@@ -35,9 +36,9 @@ public class UserController {
     public ResponseEntity<UserResponseDto> cadastrar(
             @RequestPart("dados") @Valid UserDto dto,
             @RequestPart(value = "foto", required = false) MultipartFile foto,
-            @AuthenticationPrincipal User logado) {
+            @AuthenticationPrincipal CustomUserDetails userAdm) {
 
-        return ResponseEntity.status(201).body(userService.cadastrar(dto,foto,logado));
+        return ResponseEntity.status(201).body(userService.cadastrar(dto,foto,userAdm));
     }
 
     @PostMapping("/login")

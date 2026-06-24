@@ -9,6 +9,7 @@ import com.wictor.enums.Tipo;
 import com.wictor.exception.*;
 import com.wictor.model.User;
 import com.wictor.repository.UserRepository;
+import com.wictor.security.CustomUserDetails;
 import com.wictor.util.AgeValidator;
 import com.wictor.util.CpfValidator;
 import com.wictor.util.NumberValidator;
@@ -36,28 +37,23 @@ public class UserService {
     private static final String PREFIXO_IMAGEM  = "user";
 
     @Transactional
-    public UserResponseDto cadastrar(UserDto userDTO, MultipartFile foto, User logado) {
+    public UserResponseDto cadastrar(UserDto userDTO, MultipartFile foto, CustomUserDetails userAdm) {
 
-        String cpfCript = CpfService.Criptografia(userDTO.cpf());
-        String tel1 = NumberValidator.limpar(userDTO.tel1());
-        String tel2 = NumberValidator.limpar(userDTO.tel2());
+        String cpf = userDTO.cpf();
 
-
-        if (userRepository.existsByCpf(cpfCript)) {
-            throw new ConflitoException("CPF já cadastrado");
-        }
-        if (userRepository.existsByEmail1(userDTO.email1())) {
-            throw new ConflitoException("Email já cadastrado");
-        }
-        if (userRepository.existsByTel1(tel1)) {
-            throw new ConflitoException("Telefone já cadastrado");
-        }
-        if (!CpfValidator.validar(userDTO.cpf())) {
+        if (!CpfValidator.validar(cpf)) {
             throw new RegraException("CPF inválido");
         }
+
         if (!AgeValidator.validar(userDTO.datanasc())) {
             throw new ConflitoException("Data de nascimento inválida");
         }
+
+        String cpfCript = CpfService.Criptografia(cpf);
+        String tel1 = NumberValidator.limpar(userDTO.tel1());
+        String tel2 = NumberValidator.limpar(userDTO.tel2());
+
+        validarDadosCadastro(cpfCript, userDTO.email1(), tel1);
 
         String cepp = userDTO.cep().replaceAll("[^0-9]", "");
         String hash = PasswordService.Criptografia(userDTO.senha());
@@ -78,36 +74,37 @@ public class UserService {
                 .comp(userDTO.comp())
                 .datanasc(userDTO.datanasc())
                 .ativo(true);
-        boolean isAdmin = logado != null && logado.getRole().equals(Role.ADMIN);
+
+        boolean isAdmin = userAdm != null && userAdm.getUser().getRole() == Role.ADMIN;
+
         if (isAdmin) {
             builder.role(userDTO.role());
             builder.tipo(userDTO.tipo());
         } else {
-            builder.role(Role.USER);
+            builder.role(Role.ALUNO);
             builder.tipo(Tipo.ALUNO);
         }
-        User user = builder.build();
 
-        User savedUser = userRepository.save(user);
+        User user = userRepository.save(builder.build());
 
-        atualizarFoto(savedUser, foto);
+        atualizarFoto(user, foto);
 
-        return toResponseDto(savedUser);
+        return toResponseDto(user);
     }
 
     public User autenticar(String cpf, String senhaDigitada) {
+
 
         String cpfCript = CpfService.Criptografia(cpf);
 
         User user = userRepository.findByCpf(cpfCript)
                 .orElseThrow(() -> new RegraException("CPF ou senha inválidos"));
+        validarAtivo(user);
 
         boolean senhaValida = PasswordService.verificarSenha(
                 senhaDigitada,
                 user.getSenha()
         );
-
-        validarAtivo(user);
 
         if (!senhaValida) {
             throw new RegraException("CPF ou senha inválidos");
@@ -118,22 +115,37 @@ public class UserService {
 
     @Transactional
     public UserResponseDto atualizar(Integer id, UserUpdateDto dto, MultipartFile foto) {
-        User user = buscarUserPorId(id);
 
+        User user = buscarUserPorId(id);
         validarAtivo(user);
 
         if (dto.cpf() != null && !dto.cpf().isBlank()) {
+
             if (!CpfValidator.validar(dto.cpf())) {
                 throw new RegraException("CPF inválido");
             }
 
-            String Cpfcript = CpfService.Criptografia(dto.cpf());
-            if (!Cpfcript.equals(user.getCpf()) &&
-                    userRepository.existsByCpf(Cpfcript)) {
-                throw new ConflitoException("CPF já cadastrado");
-            }
+            String cpfCript = CpfService.Criptografia(dto.cpf());
 
-            user.setCpf(Cpfcript);
+            validarDados(user.getId(), cpfCript, null, null);
+
+            user.setCpf(cpfCript);
+        }
+
+        if (dto.email1() != null && !dto.email1().isBlank()) {
+
+            validarDados(user.getId(), null, dto.email1(), null);
+
+            user.setEmail1(dto.email1());
+        }
+
+        if (dto.tel1() != null && !dto.tel1().isBlank()) {
+
+            String telLimpo = NumberValidator.limpar(dto.tel1());
+
+            validarDados(user.getId(), null, null, telLimpo);
+
+            user.setTel1(telLimpo);
         }
 
         if (dto.senha() != null && !dto.senha().isBlank()) {
@@ -144,25 +156,8 @@ public class UserService {
             user.setNome(dto.nome());
         }
 
-        if (dto.email1() != null && !dto.email1().isBlank()) {
-            if (userRepository.existsByEmail1(dto.email1())) {
-                throw new ConflitoException("Email já cadastrado");
-            }
-            user.setEmail1(dto.email1());
-        }
-
         if (dto.email2() != null && !dto.email2().isBlank()) {
             user.setEmail2(dto.email2());
-        }
-
-        if (dto.tel1() != null && !dto.tel1().isBlank()) {
-
-            String telLimpo = NumberValidator.limpar(dto.tel1());
-
-            if (userRepository.existsByTel1(telLimpo)) {
-                throw new ConflitoException("Telefone já cadastrado");
-            }
-            user.setTel1(telLimpo);
         }
 
         if (dto.tel2() != null && !dto.tel2().isBlank()) {
@@ -174,8 +169,7 @@ public class UserService {
         }
 
         if (dto.cep() != null && !dto.cep().isBlank()) {
-            String cepp = dto.cep().replaceAll("[^0-9]", "");
-            user.setCep(cepp);
+            user.setCep(dto.cep().replaceAll("[^0-9]", ""));
         }
 
         if (dto.bairro() != null && !dto.bairro().isBlank()) {
@@ -199,12 +193,13 @@ public class UserService {
             if (!AgeValidator.validar(dto.datanasc())) {
                 throw new ConflitoException("Data de nascimento inválida");
             }
+
             user.setDatanasc(dto.datanasc());
         }
 
         atualizarFoto(user, foto);
-        userRepository.save(user);
-        return toResponseDto(user);
+
+        return toResponseDto(userRepository.save(user));
     }
 
     public UserResponseDto atualizarRole(Integer id, UserRoleUpdateDto dto) {
@@ -307,6 +302,35 @@ public class UserService {
 
         if (!user.isAtivo()) {
             throw new RegraException("Usuário desativado");
+        }
+    }
+
+    private void validarDadosCadastro(String cpfCript, String email, String tel) {
+        if (cpfCript != null && userRepository.existsByCpf(cpfCript)) {
+            throw new ConflitoException("CPF já cadastrado");
+        }
+
+        if (email != null && userRepository.existsByEmail1(email)) {
+            throw new ConflitoException("Email já cadastrado");
+        }
+
+        if (tel != null && userRepository.existsByTel1(tel)) {
+            throw new ConflitoException("Telefone já cadastrado");
+        }
+    }
+
+    private void validarDados(Integer id, String cpfCript, String email, String tel) {
+
+        if (cpfCript != null && userRepository.existsByCpfAndIdNot(cpfCript, id)) {
+            throw new ConflitoException("CPF já cadastrado");
+        }
+
+        if (email != null && userRepository.existsByEmail1AndIdNot(email, id)) {
+            throw new ConflitoException("Email já cadastrado");
+        }
+
+        if (tel != null && userRepository.existsByTel1AndIdNot(tel, id)) {
+            throw new ConflitoException("Telefone já cadastrado");
         }
     }
 
