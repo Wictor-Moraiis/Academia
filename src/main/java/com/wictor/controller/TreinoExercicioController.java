@@ -3,6 +3,7 @@ package com.wictor.controller;
 import com.wictor.dto.treinoexercicio.TreinoExercicioDto;
 import com.wictor.dto.treinoexercicio.TreinoExercicioResponseDto;
 import com.wictor.dto.treinoexercicio.TreinoExercicioUpdateDto;
+import com.wictor.security.CustomUserDetails;
 import com.wictor.service.TreinoExercicioService;
 import com.wictor.model.TreinoExercicioId;
 import com.wictor.model.User;
@@ -24,38 +25,38 @@ public class TreinoExercicioController {
         this.treinoexercicioService = treinoexercicioService;
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
     @PostMapping
     public ResponseEntity<TreinoExercicioResponseDto> cadastrar(
             @RequestBody @Valid TreinoExercicioDto dto,
-            @AuthenticationPrincipal User logado) {
+            @AuthenticationPrincipal CustomUserDetails user) {
 
-        return ResponseEntity.status(201).body(treinoexercicioService.cadastrar(dto, logado));
+        return ResponseEntity.status(201).body(treinoexercicioService.cadastrar(dto, user.getId()));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
     @PatchMapping("/{treinoId}/{exercId}")
     public ResponseEntity<TreinoExercicioResponseDto> alterar(
             @PathVariable Integer treinoId,
             @PathVariable Integer exercId,
             @RequestBody @Valid TreinoExercicioUpdateDto dto,
-            @AuthenticationPrincipal User logado) {
+            @AuthenticationPrincipal CustomUserDetails user) {
 
         TreinoExercicioId id = new TreinoExercicioId(treinoId, exercId);
 
-        return ResponseEntity.ok(treinoexercicioService.atualizar(id, dto, logado));
+        return ResponseEntity.ok(treinoexercicioService.atualizar(id, dto, user.getId()));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
     @DeleteMapping("/{treinoId}/{exercId}")
     public ResponseEntity<Void> deletar(
             @PathVariable Integer treinoId,
             @PathVariable Integer exercId,
-            @AuthenticationPrincipal User logado) {
+            @AuthenticationPrincipal CustomUserDetails user) {
 
         TreinoExercicioId id = new TreinoExercicioId(treinoId, exercId);
 
-        treinoexercicioService.deletar(id, logado);
+        treinoexercicioService.deletar(id, user.getId());
 
         return ResponseEntity.noContent().build();
     }

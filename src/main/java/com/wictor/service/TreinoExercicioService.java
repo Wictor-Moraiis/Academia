@@ -8,6 +8,7 @@ import com.wictor.model.*;
 import com.wictor.repository.ExercicioRepository;
 import com.wictor.repository.TreinoExercicioRepository;
 import com.wictor.repository.TreinoRepository;
+import com.wictor.repository.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -19,15 +20,18 @@ public class TreinoExercicioService {
     private final TreinoExercicioRepository treinoexercicioRepository;
     private final TreinoRepository treinoRepository;
     private final ExercicioRepository exercicioRepository;
+    private final UserRepository userRepository;
 
     public TreinoExercicioService(
             TreinoExercicioRepository treinoexercicioRepository,
             TreinoRepository treinoRepository,
-            ExercicioRepository exercicioRepository) {
+            ExercicioRepository exercicioRepository,
+            UserRepository userRepository) {
 
         this.treinoexercicioRepository = treinoexercicioRepository;
         this.treinoRepository = treinoRepository;
         this.exercicioRepository = exercicioRepository;
+        this.userRepository = userRepository;
     }
     private void validarPermissao(Treino treino, User logado) {
 
@@ -42,7 +46,11 @@ public class TreinoExercicioService {
             throw new AccessDeniedException("Sem permissão");
         }
     }
-    public TreinoExercicioResponseDto cadastrar(TreinoExercicioDto dto, User logado) {
+
+    public TreinoExercicioResponseDto cadastrar(TreinoExercicioDto dto, Integer userId) {
+
+        User logado = getUser(userId);
+
         Treino treino = treinoRepository.findById(dto.treinoId())
                 .orElseThrow(() -> new NotFoundException("Treino não encontrado"));
 
@@ -50,6 +58,7 @@ public class TreinoExercicioService {
                 .orElseThrow(() -> new NotFoundException("Exercício não encontrado"));
 
         validarPermissao(treino, logado);
+
 
         TreinoExercicioId id = TreinoExercicioId.builder()
                 .treinoId(treino.getId())
@@ -72,7 +81,10 @@ public class TreinoExercicioService {
         return toResponseDto(salvo);
     }
 
-    public TreinoExercicioResponseDto atualizar(TreinoExercicioId id, TreinoExercicioUpdateDto dto, User logado) {
+    public TreinoExercicioResponseDto atualizar(TreinoExercicioId id, TreinoExercicioUpdateDto dto, Integer userId) {
+
+        User logado = getUser(userId);
+
         TreinoExercicio treinoExercicio = buscarTreinoExercicioPorId(id);
 
         validarPermissao(treinoExercicio.getTreino(), logado);
@@ -111,7 +123,10 @@ public class TreinoExercicioService {
         return toResponseDto(buscarTreinoExercicioPorId(id));
     }
 
-    public void deletar(TreinoExercicioId id, User logado){
+    public void deletar(TreinoExercicioId id, Integer userId){
+
+        User logado = getUser(userId);
+
         TreinoExercicio treinoExercicio = buscarTreinoExercicioPorId(id);
 
         validarPermissao(treinoExercicio.getTreino(), logado);
@@ -136,6 +151,11 @@ public class TreinoExercicioService {
     private TreinoExercicio buscarTreinoExercicioPorId(TreinoExercicioId id) {
         return treinoexercicioRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Exercicio no treino não encontrado"));
+    }
+
+    private User getUser(Integer userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
     }
 
 
