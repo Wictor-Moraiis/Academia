@@ -43,12 +43,12 @@ public class JwtService {
         );
     }
 
-    public String extrairRule(String token) {
+    public String extrairRole(String token) {
         return (String) Jwts.parser()
                 .setSigningKey(key)
                 .parseClaimsJws(token)
                 .getBody()
-                .get("rule");
+                .get("role");
     }
 
     public boolean validarToken(String token) {
