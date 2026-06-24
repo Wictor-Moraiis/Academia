@@ -7,8 +7,10 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public record AlunoDto(
+public record AlunoAdminDto(
 
+        @NotNull(message = "Identificador de usuário é obrigatório")
+        Integer userId,
         @NotBlank(message = "Informações sobre saúde são obrigatórias")
         String saude,
         String obs,
@@ -26,5 +28,4 @@ public record AlunoDto(
         LocalDate vencimento,
         @NotNull(message = "Validação se o plano está vencido é obrigatória")
         Boolean vencido
-) {
-}
+){}

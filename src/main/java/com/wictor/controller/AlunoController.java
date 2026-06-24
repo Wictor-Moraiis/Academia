@@ -1,12 +1,16 @@
 package com.wictor.controller;
 
+import com.wictor.dto.aluno.AlunoAdminDto;
 import com.wictor.dto.aluno.AlunoDto;
 import com.wictor.dto.aluno.AlunoResponseDto;
 import com.wictor.dto.aluno.AlunoUpdateDto;
+import com.wictor.model.User;
+import com.wictor.security.CustomUserDetails;
 import com.wictor.service.AlunoService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -20,14 +24,25 @@ public class  AlunoController {
         this.alunoService = alunoService;
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA')")
     @PostMapping
-    public ResponseEntity<AlunoResponseDto> cadastrar(
-            @RequestBody @Valid AlunoDto dto) {
+    public ResponseEntity<AlunoResponseDto> cadastrarAdmin(
+            @RequestBody @Valid AlunoAdminDto dto) {
 
         return ResponseEntity.status(201).body(alunoService.cadastrar(dto));
     }
 
-    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
+    @PostMapping("/me")
+    @PreAuthorize("hasRole('ALUNO')")
+    public ResponseEntity<AlunoResponseDto> cadastrarMe(
+            @RequestBody @Valid AlunoDto dto,
+            @AuthenticationPrincipal CustomUserDetails user) {
+        return ResponseEntity.ok(
+                alunoService.cadastrarMe(dto, user.getId())
+        );
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA') or #id == authentication.principal.id")
     @PatchMapping("/{id}")
     public ResponseEntity<AlunoResponseDto> atualizar(@PathVariable Integer id,
                                        @RequestBody @Valid AlunoUpdateDto dto) {
@@ -35,7 +50,7 @@ public class  AlunoController {
         return ResponseEntity.ok(alunoService.atualizar(id, dto));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Integer id) {
 
@@ -43,12 +58,14 @@ public class  AlunoController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA','PROFESSOR')")
     @GetMapping
     public ResponseEntity<List<AlunoResponseDto>> listar() {
 
         return ResponseEntity.ok(alunoService.listar());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA', 'PROFESSOR') or #id == authentication.principal.id")
     @GetMapping("/{id}")
     public ResponseEntity<AlunoResponseDto> buscarPorId(
             @PathVariable Integer id) {

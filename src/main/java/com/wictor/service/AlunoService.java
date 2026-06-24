@@ -1,5 +1,6 @@
 package com.wictor.service;
 
+import com.wictor.dto.aluno.AlunoAdminDto;
 import com.wictor.dto.aluno.AlunoDto;
 import com.wictor.dto.aluno.AlunoResponseDto;
 import com.wictor.dto.aluno.AlunoUpdateDto;
@@ -34,22 +35,42 @@ public class AlunoService {
     }
 
     @Transactional
-    public AlunoResponseDto cadastrar(AlunoDto dto) {
+    public AlunoResponseDto cadastrar(AlunoAdminDto dto) {
 
         User user = userRepository.findById(dto.userId())
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
+
+        AlunoDto alunoDto = new AlunoDto(
+                dto.saude(),
+                dto.obs(),
+                dto.altura(),
+                dto.peso(),
+                dto.objetivo(),
+                dto.planoId(),
+                dto.vencimento(),
+                dto.vencido()
+        );
+
+        return cadastrarInterno(user, alunoDto);
+    }
+    @Transactional
+    private AlunoResponseDto cadastrarInterno(User user, AlunoDto dto) {
+
         if (alunoRepository.existsByUserId(user.getId())) {
             throw new ConflitoException("Usuário já é um aluno");
         }
+
         if (!user.isAtivo()) {
             throw new RegraException("Usuário desativado");
         }
+
         if (funcionarioRepository.existsByUserId(user.getId())) {
-        throw new RegraException("Usuário já é um funcionário");
+            throw new RegraException("Usuário já é um funcionário");
         }
+
         Plano plano = buscarPlanoPorId(dto.planoId());
 
-        Aluno.AlunoBuilder builder = Aluno.builder()
+        Aluno aluno = Aluno.builder()
                 .user(user)
                 .saude(dto.saude())
                 .obs(dto.obs())
@@ -58,10 +79,19 @@ public class AlunoService {
                 .objetivo(dto.objetivo())
                 .plano(plano)
                 .vencimento(dto.vencimento())
-                .vencido(dto.vencido());
-        Aluno aluno = alunoRepository.save(builder.build());
+                .vencido(dto.vencido())
+                .build();
+
+        aluno = alunoRepository.save(aluno);
 
         return toResponseDto(aluno);
+    }
+    public AlunoResponseDto cadastrarMe(AlunoDto dto, Integer userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
+
+        return cadastrarInterno(user, dto);
     }
 
     @Transactional
@@ -93,7 +123,7 @@ public class AlunoService {
         }
 
         if (dto.planoId() != null) {
-            Plano plano = buscarPlanoPorId(id);
+            Plano plano = buscarPlanoPorId(dto.planoId());
             aluno.setPlano(plano);
         }
 
