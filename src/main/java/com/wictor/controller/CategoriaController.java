@@ -20,7 +20,7 @@ public class CategoriaController {
         this.categoriaService = categoriaService;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE')")
     @PostMapping
     public ResponseEntity<CategoriaResponseDto> cadastrar(
             @RequestBody @Valid CategoriaDto dto) {
@@ -28,7 +28,7 @@ public class CategoriaController {
         return ResponseEntity.status(201).body(categoriaService.cadastrar(dto));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE')")
     @PatchMapping("/{id}")
     public ResponseEntity<CategoriaResponseDto> alterar(@PathVariable Integer id,
                                      @RequestBody @Valid CategoriaUpdateDto dto) {
@@ -36,7 +36,7 @@ public class CategoriaController {
         return ResponseEntity.ok(categoriaService.atualizar(id, dto));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Integer id) {
 
@@ -44,11 +44,13 @@ public class CategoriaController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA')")
     @GetMapping
     public ResponseEntity<List<CategoriaResponseDto>> listar() {
         return ResponseEntity.ok(categoriaService.listar());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA')")
     @GetMapping("/{id}")
     public ResponseEntity<CategoriaResponseDto> buscarPorId(@PathVariable Integer id) {
         return ResponseEntity.ok(
