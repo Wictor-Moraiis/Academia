@@ -21,7 +21,7 @@ public class ExercicioController {
         this.exercicioService =  exercicioService;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE','PROFESSOR')")
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<ExercicioResponseDto> cadastrar(
             @RequestPart("dados") @Valid ExercicioDto dto,
@@ -30,7 +30,7 @@ public class ExercicioController {
         return ResponseEntity.status(201).body(exercicioService.cadastrar(dto,foto));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE','PROFESSOR')")
     @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
     public ResponseEntity<ExercicioResponseDto> alterar(@PathVariable Integer id,
                                      @RequestPart("dados") @Valid ExercicioUpdateDto dto,
@@ -39,7 +39,7 @@ public class ExercicioController {
         return ResponseEntity.ok(exercicioService.atualizar(id, dto, foto));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Integer id) {
 
@@ -47,11 +47,13 @@ public class ExercicioController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA','PROFESSOR','ALUNO')")
     @GetMapping
     public ResponseEntity<List<ExercicioResponseDto>> listar() {
         return ResponseEntity.ok(exercicioService.listar());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA','PROFESSOR','ALUNO')")
     @GetMapping("/{id}")
     public ResponseEntity<ExercicioResponseDto> buscarPorId(@PathVariable Integer id) {
         return ResponseEntity.ok(exercicioService.buscarPorId(id));
