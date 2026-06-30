@@ -3,9 +3,12 @@ package com.wictor.service;
 import com.wictor.dto.financeiro.FinanceiroDto;
 import com.wictor.dto.financeiro.FinanceiroResponseDto;
 import com.wictor.dto.financeiro.FinanceiroUpdateDto;
+import com.wictor.enums.Role;
 import com.wictor.exception.NotFoundException;
+import com.wictor.exception.RegraException;
 import com.wictor.model.Financeiro;
 import com.wictor.repository.FinanceiroRepository;
+import com.wictor.security.CustomUserDetails;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +28,7 @@ public class FinanceiroService {
         Financeiro financeiro = financeiroRepository.save(
                 Financeiro.builder()
                         .nome(financeiroDTO.nome())
+                        .tipo(financeiroDTO.tipo())
                         .data(financeiroDTO.data())
                         .valor(financeiroDTO.valor())
                         .build()
@@ -41,6 +45,10 @@ public class FinanceiroService {
             financeiro.setNome(dto.nome());
         }
 
+        if (dto.tipo() != null && !dto.tipo().isBlank()) {
+            financeiro.setTipo(dto.tipo());
+        }
+
         if (dto.data() != null) {
             financeiro.setData(dto.data());
         }
@@ -54,16 +62,24 @@ public class FinanceiroService {
         return toResponseDto(financeiro);
     }
 
-    public List<FinanceiroResponseDto> listar() {
+    public List<FinanceiroResponseDto> listar(CustomUserDetails user) {
+
         return financeiroRepository.findAll()
                 .stream()
+                .filter(financeiro -> podeVisualizar(user, financeiro))
                 .map(this::toResponseDto)
                 .toList();
     }
 
-    public FinanceiroResponseDto buscarPorId(Integer id) {
+    public FinanceiroResponseDto buscarPorId(Integer id, CustomUserDetails user){
 
-        return toResponseDto(buscarFinanceiroPorId(id));
+        Financeiro financeiro = buscarFinanceiroPorId(id);
+
+        if (!podeVisualizar(user, financeiro)) {
+            throw new RegraException("Você não possui acesso a este lançamento.");
+        }
+
+        return toResponseDto(financeiro);
     }
 
     private Financeiro buscarFinanceiroPorId(Integer id) {
@@ -82,8 +98,19 @@ public class FinanceiroService {
         return new FinanceiroResponseDto(
                 financeiro.getId(),
                 financeiro.getNome(),
+                financeiro.getTipo(),
                 financeiro.getData(),
                 financeiro.getValor()
         );
+    }
+
+    private boolean podeVisualizar(CustomUserDetails user, Financeiro financeiro) {
+
+        if (user.getUser().getRole() != Role.RECEPCIONISTA) {
+            return true;
+        }
+
+        return financeiro.getTipo().equals("MENSALIDADE")
+                || financeiro.getTipo().equals("PAGAMENTO");
     }
 }

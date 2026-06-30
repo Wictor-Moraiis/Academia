@@ -7,6 +7,7 @@ public record FinanceiroResponseDto(
 
         Integer id,
         String nome,
+        String tipo,
         LocalDate data,
         BigDecimal valor
 ) {}

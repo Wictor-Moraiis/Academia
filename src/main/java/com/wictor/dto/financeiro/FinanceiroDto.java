@@ -10,6 +10,9 @@ public record FinanceiroDto(
         @NotBlank(message = "Nome da atividade financeira é obrigatório")
         String nome,
 
+        @NotBlank(message = "Tipo da atividade financeira é obrigatório")
+        String tipo,
+
         @NotNull(message = "Data da atividade financeira é obrigatório")
         LocalDate data,
 

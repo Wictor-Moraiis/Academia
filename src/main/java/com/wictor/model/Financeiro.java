@@ -24,6 +24,9 @@ public class Financeiro {
     @Column(name = "Fin_nome", nullable = false)
     private String nome;
 
+    @Column(name = "Fin_tipo", nullable = false)
+    private String tipo;
+
     @Column(name = "Fin_data", nullable = false)
     private LocalDate data;
 

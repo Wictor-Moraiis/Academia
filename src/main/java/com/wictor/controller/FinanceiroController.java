@@ -3,10 +3,12 @@ package com.wictor.controller;
 import com.wictor.dto.financeiro.FinanceiroDto;
 import com.wictor.dto.financeiro.FinanceiroResponseDto;
 import com.wictor.dto.financeiro.FinanceiroUpdateDto;
+import com.wictor.security.CustomUserDetails;
 import com.wictor.service.FinanceiroService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -20,7 +22,7 @@ public class FinanceiroController {
         this.financeiroService = financeiroService;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA')")
     @PostMapping
     public ResponseEntity<FinanceiroResponseDto> cadastrar(
             @RequestBody @Valid FinanceiroDto dto) {
@@ -28,7 +30,7 @@ public class FinanceiroController {
         return ResponseEntity.status(201).body(financeiroService.cadastrar(dto));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA')")
     @PatchMapping("/{id}")
     public ResponseEntity<FinanceiroResponseDto> alterar(@PathVariable Integer id,
                                      @RequestBody @Valid FinanceiroUpdateDto dto) {
@@ -44,13 +46,19 @@ public class FinanceiroController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA')")
     @GetMapping
-    public ResponseEntity<List<FinanceiroResponseDto>> listar() {
-        return ResponseEntity.ok(financeiroService.listar());
+    public ResponseEntity<List<FinanceiroResponseDto>> listar(
+            @AuthenticationPrincipal CustomUserDetails user) {
+        return ResponseEntity.ok(financeiroService.listar(user));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA')")
     @GetMapping("/{id}")
-    public ResponseEntity<FinanceiroResponseDto> buscarPorId(@PathVariable Integer id) {
-        return ResponseEntity.ok(financeiroService.buscarPorId(id));
+    public ResponseEntity<FinanceiroResponseDto> buscarPorId(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal CustomUserDetails user) {
+
+        return ResponseEntity.ok(financeiroService.buscarPorId(id, user));
     }
 }

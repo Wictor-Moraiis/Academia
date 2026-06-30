@@ -6,6 +6,7 @@ import java.time.LocalDate;
 public record FinanceiroUpdateDto(
 
         String nome,
+        String tipo,
         LocalDate data,
         BigDecimal valor
 ) {}
