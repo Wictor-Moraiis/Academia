@@ -3,6 +3,8 @@ package com.wictor.controller;
 import com.wictor.dto.financeiro.FinanceiroDto;
 import com.wictor.dto.financeiro.FinanceiroResponseDto;
 import com.wictor.dto.financeiro.FinanceiroUpdateDto;
+import com.wictor.dto.venda.VendaDto;
+import com.wictor.dto.venda.VendaResponseDto;
 import com.wictor.security.CustomUserDetails;
 import com.wictor.service.FinanceiroService;
 import jakarta.validation.Valid;
@@ -10,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -31,9 +34,18 @@ public class FinanceiroController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA')")
+    @PostMapping("/venda")
+    public ResponseEntity<VendaResponseDto> vender(
+            @RequestBody @Valid VendaDto dto,
+            @AuthenticationPrincipal CustomUserDetails user) {
+
+        return ResponseEntity.status(201).body(financeiroService.vender(dto, user));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA')")
     @PatchMapping("/{id}")
     public ResponseEntity<FinanceiroResponseDto> alterar(@PathVariable Integer id,
-                                     @RequestBody @Valid FinanceiroUpdateDto dto) {
+                                                         @RequestBody @Valid FinanceiroUpdateDto dto) {
 
         return ResponseEntity.ok(financeiroService.atualizar(id, dto));
     }
