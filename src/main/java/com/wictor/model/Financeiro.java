@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "Financeiro")
@@ -32,4 +33,11 @@ public class Financeiro {
 
     @Column(name = "Fin_val", nullable = false)
     private BigDecimal valor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "Func_id", nullable = false)
+    private Funcionario funcionario;
+
+    @OneToMany(mappedBy = "financeiro", cascade = CascadeType.ALL)
+    private List<ItemFinanceiro> itens;
 }

@@ -3,24 +3,41 @@ package com.wictor.service;
 import com.wictor.dto.financeiro.FinanceiroDto;
 import com.wictor.dto.financeiro.FinanceiroResponseDto;
 import com.wictor.dto.financeiro.FinanceiroUpdateDto;
+import com.wictor.dto.itemfinanceiro.ItemFinanceiroDto;
+import com.wictor.dto.itemfinanceiro.ItemFinanceiroResponseDto;
+import com.wictor.dto.venda.VendaDto;
+import com.wictor.dto.venda.VendaResponseDto;
 import com.wictor.enums.Role;
 import com.wictor.exception.NotFoundException;
 import com.wictor.exception.RegraException;
 import com.wictor.model.Financeiro;
+import com.wictor.model.Funcionario;
+import com.wictor.model.ItemFinanceiro;
+import com.wictor.model.Produto;
 import com.wictor.repository.FinanceiroRepository;
+import com.wictor.repository.FuncionarioRepository;
+import com.wictor.repository.ProdutoRepository;
 import com.wictor.security.CustomUserDetails;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class FinanceiroService {
 
     private final FinanceiroRepository financeiroRepository;
+    private final ProdutoRepository produtoRepository;
+    private final FuncionarioRepository funcionarioRepository;
 
-    public FinanceiroService(FinanceiroRepository financeiroRepository) {
+    public FinanceiroService(FinanceiroRepository financeiroRepository, ProdutoRepository produtoRepository, FuncionarioRepository funcionarioRepository
+    ){
         this.financeiroRepository = financeiroRepository;
+        this.produtoRepository = produtoRepository;
+        this.funcionarioRepository = funcionarioRepository;
     }
 
     public FinanceiroResponseDto cadastrar(FinanceiroDto financeiroDTO) {
@@ -35,6 +52,81 @@ public class FinanceiroService {
         );
 
         return toResponseDto(financeiro);
+    }
+
+    @Transactional
+    public VendaResponseDto vender(VendaDto dto, CustomUserDetails user) {
+
+        Funcionario funcionario = funcionarioRepository.findById(user.getId())
+                .orElseThrow(() -> new NotFoundException("Funcionário não encontrado"));
+
+        Financeiro financeiro = Financeiro.builder()
+                .nome("Venda de Produtos")
+                .tipo("ENTRADA")
+                .data(LocalDate.now())
+                .funcionario(funcionario)
+                .build();
+
+        List<ItemFinanceiro> itens = new ArrayList<>();
+        List<ItemFinanceiroResponseDto> itensResponse = new ArrayList<>();
+
+        BigDecimal total = BigDecimal.ZERO;
+
+        for (ItemFinanceiroDto itemDto : dto.itens()) {
+
+            Produto produto = produtoRepository.findById(itemDto.produtoId())
+                    .orElseThrow(() -> new NotFoundException("Produto não encontrado"));
+
+            if (produto.getQtd() < itemDto.qtd()) {
+                throw new RegraException("Estoque insuficiente: " + produto.getNome());
+            }
+
+            BigDecimal valorUnitario = produto.getPreco();
+
+            BigDecimal desconto = itemDto.desconto() != null
+                    ? itemDto.desconto()
+                    : BigDecimal.ZERO;
+
+            BigDecimal subtotal = valorUnitario
+                    .multiply(BigDecimal.valueOf(itemDto.qtd()))
+                    .subtract(desconto);
+
+            total = total.add(subtotal);
+
+            ItemFinanceiro item = ItemFinanceiro.builder()
+                    .financeiro(financeiro)
+                    .produto(produto)
+                    .quantidade(itemDto.qtd())
+                    .valorUnitario(valorUnitario)
+                    .desconto(desconto)
+                    .build();
+
+            itens.add(item);
+
+            itensResponse.add(new ItemFinanceiroResponseDto(
+                    produto.getNome(),
+                    itemDto.qtd(),
+                    valorUnitario,
+                    desconto,
+                    subtotal
+            ));
+
+            produto.setQtd(produto.getQtd() - itemDto.qtd());
+            produtoRepository.save(produto);
+        }
+
+        financeiro.setValor(total);
+        financeiro.setItens(itens);
+
+        Financeiro salvo = financeiroRepository.save(financeiro);
+
+        return new VendaResponseDto(
+                salvo.getId(),
+                funcionario.getUser().getNome(),
+                total,
+                salvo.getData(),
+                itensResponse
+        );
     }
 
     @Transactional
