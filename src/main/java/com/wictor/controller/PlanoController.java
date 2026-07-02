@@ -32,7 +32,7 @@ public class PlanoController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}")
-    public ResponseEntity<PlanoResponseDto> alterar(@PathVariable Integer id,
+    public ResponseEntity<PlanoResponseDto> atualizar(@PathVariable Integer id,
             @RequestBody @Valid PlanoUpdateDto dto) {
 
         return ResponseEntity.ok(planoService.atualizar(id, dto));

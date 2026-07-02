@@ -36,7 +36,7 @@ public class TreinoExercicioController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
     @PatchMapping("/{treinoId}/{exercId}")
-    public ResponseEntity<TreinoExercicioResponseDto> alterar(
+    public ResponseEntity<TreinoExercicioResponseDto> atualizar(
             @PathVariable Integer treinoId,
             @PathVariable Integer exercId,
             @RequestBody @Valid TreinoExercicioUpdateDto dto,

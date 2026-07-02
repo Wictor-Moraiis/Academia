@@ -32,7 +32,7 @@ public class ExercicioController {
 
     @PreAuthorize("hasAnyRole('ADMIN','GERENTE','PROFESSOR')")
     @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
-    public ResponseEntity<ExercicioResponseDto> alterar(@PathVariable Integer id,
+    public ResponseEntity<ExercicioResponseDto> atualizar(@PathVariable Integer id,
                                      @RequestPart("dados") @Valid ExercicioUpdateDto dto,
                                      @RequestPart(value = "foto", required = false) MultipartFile foto) {
 

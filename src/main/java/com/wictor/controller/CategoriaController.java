@@ -30,7 +30,7 @@ public class CategoriaController {
 
     @PreAuthorize("hasAnyRole('ADMIN','GERENTE')")
     @PatchMapping("/{id}")
-    public ResponseEntity<CategoriaResponseDto> alterar(@PathVariable Integer id,
+    public ResponseEntity<CategoriaResponseDto> atualizar(@PathVariable Integer id,
                                      @RequestBody @Valid CategoriaUpdateDto dto) {
 
         return ResponseEntity.ok(categoriaService.atualizar(id, dto));

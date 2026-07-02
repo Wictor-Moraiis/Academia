@@ -32,7 +32,7 @@ public class MaquinaController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}")
-    public ResponseEntity<MaquinaResponseDto> alterar(@PathVariable Integer id,
+    public ResponseEntity<MaquinaResponseDto> atualizar(@PathVariable Integer id,
                                      @RequestBody @Valid MaquinaUpdateDto dto) {
 
         return ResponseEntity.ok(maquinaService.atualizar(id, dto));

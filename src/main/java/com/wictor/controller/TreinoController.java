@@ -37,7 +37,7 @@ public class TreinoController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
     @PatchMapping("/{id}")
-    public ResponseEntity<TreinoResponseDto> alterar(@PathVariable Integer id,
+    public ResponseEntity<TreinoResponseDto> atualizar(@PathVariable Integer id,
                                      @RequestBody @Valid TreinoUpdateDto dto,
                                                      @AuthenticationPrincipal CustomUserDetails user) {
 

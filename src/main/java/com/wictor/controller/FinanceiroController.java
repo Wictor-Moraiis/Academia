@@ -44,7 +44,7 @@ public class FinanceiroController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA')")
     @PatchMapping("/{id}")
-    public ResponseEntity<FinanceiroResponseDto> alterar(@PathVariable Integer id,
+    public ResponseEntity<FinanceiroResponseDto> atualizar(@PathVariable Integer id,
                                                          @RequestBody @Valid FinanceiroUpdateDto dto) {
 
         return ResponseEntity.ok(financeiroService.atualizar(id, dto));
