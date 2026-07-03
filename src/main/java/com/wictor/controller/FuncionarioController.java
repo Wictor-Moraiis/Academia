@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -21,15 +22,16 @@ public class FuncionarioController {
         this.funcionarioService = funcionarioService;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
+    @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<FuncionarioResponseDto> cadastrar(
-            @RequestBody @Valid FuncionarioDto dto) {
+            @RequestPart("dados") @Valid FuncionarioDto dto,
+            @RequestPart(value = "foto", required = false) MultipartFile foto) {
 
-        return ResponseEntity.status(201).body(funcionarioService.cadastrar(dto));
+        return ResponseEntity.status(201).body(funcionarioService.cadastrar(dto, foto));
     }
 
-    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE') or #id == authentication.principal.id")
     @PatchMapping("/{id}")
     public ResponseEntity<FuncionarioResponseDto> atualizar(@PathVariable Integer id,
                                                             @RequestBody @Valid FuncionarioUpdateDto dto) {
@@ -37,7 +39,7 @@ public class FuncionarioController {
         return ResponseEntity.ok(funcionarioService.atualizar(id, dto));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Integer id) {
 
@@ -45,11 +47,13 @@ public class FuncionarioController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     @GetMapping
     public ResponseEntity<List<FuncionarioResponseDto>> listar() {
         return ResponseEntity.ok(funcionarioService.listar());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     @GetMapping("/{id}")
     public ResponseEntity<FuncionarioResponseDto> buscarPorId(@PathVariable Integer id) {
         return ResponseEntity.ok(funcionarioService.buscarPorId(id));

@@ -1,6 +1,8 @@
 package com.wictor.dto.funcionario;
 
+import com.wictor.dto.user.UserDto;
 import com.wictor.enums.TipoContrato;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -8,8 +10,10 @@ import java.time.LocalTime;
 
 public record FuncionarioDto(
 
-        @NotNull(message = "Identificador de usuário é obrigatório")
-        Integer userId,
+        @NotNull(message = "Dados do usuário são obrigatórios")
+        @Valid
+        UserDto user,
+
         String cref,
         @NotNull(message = "Tipo de contrato é obrigatório")
         TipoContrato tipoContrato,
