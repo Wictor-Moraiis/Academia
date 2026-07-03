@@ -24,6 +24,7 @@ public class CategoriaService {
                 Categoria.builder()
                         .nome(categoriaDTO.nome())
                         .salario(categoriaDTO.salario())
+                        .role(categoriaDTO.role())
                         .build()
         );
 
@@ -39,6 +40,10 @@ public class CategoriaService {
 
         if (dto.salario() != null) {
             categoria.setSalario(dto.salario());
+        }
+
+        if (dto.role() != null) {
+            categoria.setRole(dto.role());
         }
 
         categoriaRepository.save(categoria);
@@ -58,7 +63,8 @@ public class CategoriaService {
         return new CategoriaResponseDto(
                categoria.getId(),
                 categoria.getNome(),
-                categoria.getSalario()
+                categoria.getSalario(),
+                categoria.getRole()
         );
     }
 
