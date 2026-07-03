@@ -2,7 +2,6 @@ package com.wictor.config;
 
 import com.wictor.enums.Role;
 import com.wictor.enums.Sexo;
-import com.wictor.enums.Tipo;
 import com.wictor.model.User;
 import com.wictor.repository.UserRepository;
 import com.wictor.service.PasswordService;
@@ -35,7 +34,6 @@ public class AdminInitializer {
                     .numeroCasa(1)
                     .datanasc(java.time.LocalDate.of(1990, 1, 1))
                     .role(Role.ADMIN)
-                    .tipo(Tipo.FUNCIONARIO)
                     .ativo(true)
                     .build();
 
