@@ -2,7 +2,6 @@ package com.wictor.model;
 
 import com.wictor.enums.Role;
 import com.wictor.enums.Sexo;
-import com.wictor.enums.Tipo;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -113,10 +112,6 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     @Column(name = "User_role", nullable = false)
     private Role role;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "User_tipo", nullable = false)
-    private Tipo tipo;
 
     @Column(name = "User_ativo", nullable = false)
     private boolean ativo;

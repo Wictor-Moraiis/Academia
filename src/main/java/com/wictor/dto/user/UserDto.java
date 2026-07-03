@@ -2,7 +2,6 @@ package com.wictor.dto.user;
 
 import com.wictor.enums.Role;
 import com.wictor.enums.Sexo;
-import com.wictor.enums.Tipo;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -52,7 +51,5 @@ public record UserDto(
         Integer numeroCasa,
          String comp,
         @NotNull(message = "Data de nascimento é obrigatória")
-        LocalDate datanasc,
-        Role role,
-        Tipo tipo
+        LocalDate datanasc
 ) {}

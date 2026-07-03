@@ -2,18 +2,14 @@ package com.wictor.controller;
 
 import com.wictor.dto.login.LoginDto;
 import com.wictor.dto.login.LoginResponseDto;
-import com.wictor.dto.user.UserDto;
 import com.wictor.dto.user.UserResponseDto;
-import com.wictor.dto.user.UserRoleUpdateDto;
 import com.wictor.dto.user.UserUpdateDto;
-import com.wictor.security.CustomUserDetails;
 import com.wictor.service.JwtService;
 import com.wictor.model.User;
 import com.wictor.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,15 +28,6 @@ public class UserController {
         this.jwtService = jwtService;
     }
 
-    @PostMapping(consumes = "multipart/form-data")
-    public ResponseEntity<UserResponseDto> cadastrar(
-            @RequestPart("dados") @Valid UserDto dto,
-            @RequestPart(value = "foto", required = false) MultipartFile foto,
-            @AuthenticationPrincipal CustomUserDetails userAdm) {
-
-        return ResponseEntity.status(201).body(userService.cadastrar(dto,foto,userAdm));
-    }
-
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(@RequestBody LoginDto dto) {
         User user = userService.autenticar(dto.cpf(), dto.senha());
@@ -55,14 +42,6 @@ public class UserController {
                                        @RequestPart(value = "foto", required = false) MultipartFile foto) {
 
         return ResponseEntity.ok(userService.atualizar(id, dto, foto));
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/role/{id}")
-    public ResponseEntity<UserResponseDto> atualizarRole(@PathVariable Integer id,
-                                           @RequestBody UserRoleUpdateDto dto) {
-
-        return ResponseEntity.ok(userService.atualizarRole(id,dto));
     }
 
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")

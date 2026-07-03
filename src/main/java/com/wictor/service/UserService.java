@@ -2,14 +2,11 @@ package com.wictor.service;
 
 import com.wictor.dto.user.UserDto;
 import com.wictor.dto.user.UserResponseDto;
-import com.wictor.dto.user.UserRoleUpdateDto;
 import com.wictor.dto.user.UserUpdateDto;
 import com.wictor.enums.Role;
-import com.wictor.enums.Tipo;
 import com.wictor.exception.*;
 import com.wictor.model.User;
 import com.wictor.repository.UserRepository;
-import com.wictor.security.CustomUserDetails;
 import com.wictor.util.AgeValidator;
 import com.wictor.util.CpfValidator;
 import com.wictor.util.NumberValidator;
@@ -37,7 +34,7 @@ public class UserService {
     private static final String PREFIXO_IMAGEM  = "user";
 
     @Transactional
-    public UserResponseDto cadastrar(UserDto userDTO, MultipartFile foto, CustomUserDetails userAdm) {
+    public User cadastrar(UserDto userDTO, MultipartFile foto, Role role) {
 
         String cpf = userDTO.cpf();
 
@@ -73,23 +70,14 @@ public class UserService {
                 .numeroCasa(userDTO.numeroCasa())
                 .comp(userDTO.comp())
                 .datanasc(userDTO.datanasc())
+                .role(role)
                 .ativo(true);
-
-        boolean isAdmin = userAdm != null && userAdm.getUser().getRole() == Role.ADMIN;
-
-        if (isAdmin) {
-            builder.role(userDTO.role());
-            builder.tipo(userDTO.tipo());
-        } else {
-            builder.role(Role.ALUNO);
-            builder.tipo(Tipo.ALUNO);
-        }
 
         User user = userRepository.save(builder.build());
 
         atualizarFoto(user, foto);
 
-        return toResponseDto(user);
+        return user;
     }
 
     public User autenticar(String cpf, String senhaDigitada) {
@@ -202,21 +190,6 @@ public class UserService {
         return toResponseDto(userRepository.save(user));
     }
 
-    public UserResponseDto atualizarRole(Integer id, UserRoleUpdateDto dto) {
-        User user = buscarUserPorId(id);
-
-       validarAtivo(user);
-
-        if (dto.role() != null) {
-            user.setRole(dto.role());
-        }
-
-        if (dto.tipo() != null) {
-            user.setTipo(dto.tipo());
-        }
-        return toResponseDto(userRepository.save(user));
-    }
-
     public void desativar(Integer id) {
         alterarStatus(id, false);
     }
@@ -263,6 +236,7 @@ public class UserService {
 
     private UserResponseDto toResponseDto(User user) {
         return new UserResponseDto(
+                user.getId(),
                 user.getNome(),
                 user.getEmail1(),
                 user.getEmail2(),
@@ -275,8 +249,7 @@ public class UserService {
                 user.getNumeroCasa(),
                 user.getComp(),
                 user.getDatanasc(),
-                user.getRole(),
-                user.getTipo()
+                user.getRole()
         );
     }
 
