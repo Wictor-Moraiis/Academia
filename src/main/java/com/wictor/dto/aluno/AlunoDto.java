@@ -1,5 +1,7 @@
 package com.wictor.dto.aluno;
 
+import com.wictor.dto.user.UserDto;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -8,6 +10,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record AlunoDto(
+
+        @NotNull(message = "Dados do usuário são obrigatórios")
+        @Valid
+        UserDto user,
 
         @NotBlank(message = "Informações sobre saúde são obrigatórias")
         String saude,

@@ -1,9 +1,10 @@
 package com.wictor.service;
 
-import com.wictor.dto.aluno.AlunoAdminDto;
 import com.wictor.dto.aluno.AlunoDto;
 import com.wictor.dto.aluno.AlunoResponseDto;
 import com.wictor.dto.aluno.AlunoUpdateDto;
+import com.wictor.dto.user.UserResponseDto;
+import com.wictor.enums.Role;
 import com.wictor.exception.ConflitoException;
 import com.wictor.exception.NotFoundException;
 import com.wictor.exception.RegraException;
@@ -13,6 +14,7 @@ import com.wictor.model.User;
 import com.wictor.repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -20,48 +22,27 @@ import java.util.List;
 public class AlunoService {
 
     private final AlunoRepository alunoRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final PlanoRepository planoRepository;
     private final FuncionarioRepository funcionarioRepository;
 
     public AlunoService(AlunoRepository alunoRepository,
-                              UserRepository userRepository,
+                              UserService userService,
                               PlanoRepository planoRepository,
                         FuncionarioRepository funcionarioRepository) {
         this.alunoRepository = alunoRepository;
-        this.userRepository = userRepository;
+        this.userService = userService;
         this.planoRepository = planoRepository;
         this.funcionarioRepository = funcionarioRepository;
     }
 
     @Transactional
-    public AlunoResponseDto cadastrar(AlunoAdminDto dto) {
+    public AlunoResponseDto cadastrar(AlunoDto dto, MultipartFile foto) {
 
-        User user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
-
-        AlunoDto alunoDto = new AlunoDto(
-                dto.saude(),
-                dto.obs(),
-                dto.altura(),
-                dto.peso(),
-                dto.objetivo(),
-                dto.planoId(),
-                dto.vencimento(),
-                dto.vencido()
-        );
-
-        return cadastrarInterno(user, alunoDto);
-    }
-    @Transactional
-    private AlunoResponseDto cadastrarInterno(User user, AlunoDto dto) {
+        User user = userService.cadastrar(dto.user(), foto, Role.ALUNO);
 
         if (alunoRepository.existsByUserId(user.getId())) {
             throw new ConflitoException("Usuário já é um aluno");
-        }
-
-        if (!user.isAtivo()) {
-            throw new RegraException("Usuário desativado");
         }
 
         if (funcionarioRepository.existsByUserId(user.getId())) {
@@ -82,16 +63,9 @@ public class AlunoService {
                 .vencido(dto.vencido())
                 .build();
 
-        aluno = alunoRepository.save(aluno);
+        alunoRepository.save(aluno);
 
         return toResponseDto(aluno);
-    }
-    public AlunoResponseDto cadastrarMe(AlunoDto dto, Integer userId) {
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
-
-        return cadastrarInterno(user, dto);
     }
 
     @Transactional
@@ -144,7 +118,6 @@ public class AlunoService {
     public void deletar(Integer id) {
 
         Aluno aluno = buscarAlunoPorId(id);
-
         alunoRepository.delete(aluno);
     }
 
@@ -176,8 +149,22 @@ public class AlunoService {
 
     private AlunoResponseDto toResponseDto(Aluno aluno) {
         return new AlunoResponseDto(
-                aluno.getId(),
-                aluno.getUser().getNome(),
+                new UserResponseDto(
+                        aluno.getUser().getId(),
+                        aluno.getUser().getNome(),
+                        aluno.getUser().getEmail1(),
+                        aluno.getUser().getEmail2(),
+                        aluno.getUser().getTel1(),
+                        aluno.getUser().getTel2(),
+                        aluno.getUser().getSexo(),
+                        aluno.getUser().getCep(),
+                        aluno.getUser().getBairro(),
+                        aluno.getUser().getRua(),
+                        aluno.getUser().getNumeroCasa(),
+                        aluno.getUser().getComp(),
+                        aluno.getUser().getDatanasc(),
+                        aluno.getUser().getRole()
+                ),
                 aluno.getAltura(),
                 aluno.getPeso(),
                 aluno.getObjetivo(),
