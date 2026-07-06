@@ -25,7 +25,7 @@ public class TreinoController {
         this.treinoService = treinoService;
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'PROFESSOR')")
     @PostMapping
     public ResponseEntity<TreinoResponseDto> cadastrar(
             @RequestBody @Valid TreinoDto dto,
@@ -35,7 +35,7 @@ public class TreinoController {
                 .body(treinoService.cadastrar(dto, user.getId()));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'PROFESSOR')")
     @PatchMapping("/{id}")
     public ResponseEntity<TreinoResponseDto> atualizar(@PathVariable Integer id,
                                      @RequestBody @Valid TreinoUpdateDto dto,
@@ -44,7 +44,7 @@ public class TreinoController {
         return ResponseEntity.ok(treinoService.atualizar(id, dto, user.getId()));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'PROFESSOR')")
     @PatchMapping("/desativar/{id}")
     public ResponseEntity<Map<String, String>> desativar(@PathVariable Integer id,
                                                          @AuthenticationPrincipal CustomUserDetails user){
@@ -53,7 +53,7 @@ public class TreinoController {
         return ResponseEntity.ok(Map.of("mensagem", "Treino desativado"));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     @PatchMapping("/reativar/{id}")
     public ResponseEntity<Map<String, String>> reativar(@PathVariable Integer id) {
         treinoService.reativar(id);
@@ -68,13 +68,16 @@ public class TreinoController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'PROFESSOR')")
     @GetMapping
     public ResponseEntity<List<TreinoResponseDto>> listar() {
         return ResponseEntity.ok(treinoService.listar());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE', 'PROFESSOR', 'ALUNO')")
     @GetMapping("/{id}")
-    public ResponseEntity<TreinoResponseDto> buscarPorId(@PathVariable Integer id) {
-        return ResponseEntity.ok(treinoService.buscarPorId(id));
+    public ResponseEntity<TreinoResponseDto> buscarPorId(@PathVariable Integer id,
+                                                         @AuthenticationPrincipal CustomUserDetails user) {
+        return ResponseEntity.ok(treinoService.buscarPorId(id, user.getId()));
     }
 }

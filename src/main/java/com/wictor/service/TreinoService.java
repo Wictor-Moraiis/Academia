@@ -3,6 +3,7 @@ package com.wictor.service;
 import com.wictor.dto.treino.TreinoDto;
 import com.wictor.dto.treino.TreinoResponseDto;
 import com.wictor.dto.treino.TreinoUpdateDto;
+import com.wictor.enums.Role;
 import com.wictor.exception.NotFoundException;
 import com.wictor.model.Aluno;
 import com.wictor.model.Treino;
@@ -136,8 +137,20 @@ public class TreinoService {
                 .toList();
     }
 
-    public TreinoResponseDto buscarPorId(Integer id) {
-       return toResponseDto(buscarTreinoPorId(id));
+    public TreinoResponseDto buscarPorId(Integer id, Integer userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
+
+        Treino treino = buscarTreinoPorId(id);
+
+        if (user.getRole() == Role.ALUNO &&
+                !treino.getAluno().getUser().getId().equals(userId)) {
+
+            throw new AccessDeniedException("Você não tem permissão para acessar este treino.");
+        }
+
+        return toResponseDto(treino);
     }
 
     public void desativar(Integer id, Integer userId) {
