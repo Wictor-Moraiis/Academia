@@ -12,6 +12,7 @@ import com.wictor.util.CpfValidator;
 import com.wictor.util.NumberValidator;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -102,10 +103,13 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponseDto atualizar(Integer id, UserUpdateDto dto, MultipartFile foto) {
+    public UserResponseDto atualizar(Integer id, UserUpdateDto dto, MultipartFile foto, Integer userId) {
 
+        User logado = buscarUserPorId(userId);
         User user = buscarUserPorId(id);
+
         validarAtivo(user);
+        validarPermissao(user, logado);
 
         if (dto.cpf() != null && !dto.cpf().isBlank()) {
 
@@ -190,8 +194,15 @@ public class UserService {
         return toResponseDto(userRepository.save(user));
     }
 
-    public void desativar(Integer id) {
-        alterarStatus(id, false);
+    public void desativar(Integer id, Integer userId) {
+
+        User logado = buscarUserPorId(userId);
+        User alvo = buscarUserPorId(id);
+
+        validarPermissao(alvo, logado);
+
+        alvo.setAtivo(false);
+        userRepository.save(alvo);
     }
 
     public void reativar(Integer id) {
@@ -224,9 +235,14 @@ public class UserService {
                 .toList();
     }
 
-    public UserResponseDto buscarPorId(Integer id) {
+    public UserResponseDto buscarPorId(Integer id, Integer userId) {
 
-        return toResponseDto(buscarUserPorId(id));
+        User logado = buscarUserPorId(userId);
+        User alvo = buscarUserPorId(id);
+
+        validarPermissao(alvo, logado);
+
+        return toResponseDto(alvo);
     }
 
     private User buscarUserPorId(Integer id) {
@@ -304,6 +320,28 @@ public class UserService {
 
         if (tel != null && userRepository.existsByTel1AndIdNot(tel, id)) {
             throw new ConflitoException("Telefone já cadastrado");
+        }
+    }
+
+    private void validarPermissao(User alvo, User logado) {
+
+        boolean adminOuGerente =
+                logado.getRole() == Role.ADMIN ||
+                        logado.getRole() == Role.GERENTE;
+
+        boolean mesmoUsuario = alvo.getId().equals(logado.getId());
+
+        boolean alvoEhFuncionario =
+                alvo.getRole() != Role.ALUNO;
+
+        if (alvoEhFuncionario) {
+            if (!adminOuGerente) {
+                throw new AccessDeniedException("Apenas ADMIN ou GERENTE podem acessar funcionários");
+            }
+        } else {
+            if (!mesmoUsuario && !adminOuGerente) {
+                throw new AccessDeniedException("Aluno só pode acessar sua própria conta");
+            }
         }
     }
 
