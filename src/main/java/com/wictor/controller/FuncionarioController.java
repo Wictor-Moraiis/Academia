@@ -39,7 +39,7 @@ public class FuncionarioController {
         return ResponseEntity.ok(funcionarioService.atualizar(id, dto));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Integer id) {
 

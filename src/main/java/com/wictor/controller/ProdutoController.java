@@ -56,7 +56,7 @@ public class ProdutoController {
         return ResponseEntity.ok(Map.of("mensagem", "Produto reativado"));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','GERENTE')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Integer id) {
 

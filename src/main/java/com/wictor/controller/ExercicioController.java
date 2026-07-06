@@ -39,7 +39,7 @@ public class ExercicioController {
         return ResponseEntity.ok(exercicioService.atualizar(id, dto, foto));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','GERENTE')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Integer id) {
 

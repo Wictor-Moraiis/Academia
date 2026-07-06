@@ -22,7 +22,7 @@ public class MaquinaController {
         this.maquinaService = maquinaService;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     @PostMapping
     public ResponseEntity<MaquinaResponseDto> cadastrar(
             @RequestBody @Valid MaquinaDto dto) {
@@ -30,7 +30,7 @@ public class MaquinaController {
         return ResponseEntity.status(201).body(maquinaService.cadastrar(dto));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     @PatchMapping("/{id}")
     public ResponseEntity<MaquinaResponseDto> atualizar(@PathVariable Integer id,
                                      @RequestBody @Valid MaquinaUpdateDto dto) {
@@ -38,7 +38,7 @@ public class MaquinaController {
         return ResponseEntity.ok(maquinaService.atualizar(id, dto));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'PROFESSOR')")
     @PatchMapping("/desativar/{id}")
     public ResponseEntity<Map<String, String>> desativar(@PathVariable Integer id) {
 
@@ -46,7 +46,7 @@ public class MaquinaController {
         return ResponseEntity.ok(Map.of("mensagem", "Máquina desativada"));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     @PatchMapping("/reativar/{id}")
     public ResponseEntity<Map<String, String>> reativar(@PathVariable Integer id) {
         maquinaService.reativar(id);
@@ -61,11 +61,13 @@ public class MaquinaController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA', 'PROFESSOR', 'ALUNO')")
     @GetMapping
     public ResponseEntity<List<MaquinaResponseDto>> listar() {
         return ResponseEntity.ok(maquinaService.listar());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA', 'PROFESSOR', 'ALUNO')")
     @GetMapping("/{id}")
     public ResponseEntity<MaquinaResponseDto> buscarPorId(@PathVariable Integer id) {
         return ResponseEntity.ok(maquinaService.buscarPorId(id));

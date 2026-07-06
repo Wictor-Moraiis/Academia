@@ -38,7 +38,7 @@ public class  AlunoController {
         return ResponseEntity.ok(alunoService.atualizar(id, dto));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Integer id) {
 

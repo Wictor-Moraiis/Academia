@@ -22,7 +22,7 @@ public class PlanoController {
         this.planoService = planoService;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     @PostMapping
     public ResponseEntity<PlanoResponseDto> cadastrar(
             @RequestBody @Valid PlanoDto dto) {
@@ -30,7 +30,7 @@ public class PlanoController {
         return ResponseEntity.status(201).body(planoService.cadastrar(dto));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     @PatchMapping("/{id}")
     public ResponseEntity<PlanoResponseDto> atualizar(@PathVariable Integer id,
             @RequestBody @Valid PlanoUpdateDto dto) {
@@ -46,11 +46,13 @@ public class PlanoController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA', 'PROFESSOR', 'ALUNO')")
     @GetMapping
     public ResponseEntity<List<PlanoResponseDto>> listar() {
         return ResponseEntity.ok(planoService.listar());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA', 'PROFESSOR', 'ALUNO')")
     @GetMapping("/{id}")
     public ResponseEntity<PlanoResponseDto> buscarPorId(@PathVariable Integer id) {
         return ResponseEntity.ok(planoService.buscarPorId(id));
