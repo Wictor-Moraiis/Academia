@@ -3,6 +3,7 @@ package com.wictor.service;
 import com.wictor.dto.treinoexercicio.TreinoExercicioDto;
 import com.wictor.dto.treinoexercicio.TreinoExercicioResponseDto;
 import com.wictor.dto.treinoexercicio.TreinoExercicioUpdateDto;
+import com.wictor.enums.Role;
 import com.wictor.exception.NotFoundException;
 import com.wictor.model.*;
 import com.wictor.repository.ExercicioRepository;
@@ -35,14 +36,16 @@ public class TreinoExercicioService {
     }
     private void validarPermissao(Treino treino, User logado) {
 
-        boolean admin = logado.getRole().name().equals("ADMIN");
+        boolean admin = logado.getRole() == Role.ADMIN;
+        boolean gerente = logado.getRole() == Role.GERENTE;
+        boolean professor = logado.getRole() == Role.PROFESSOR;
 
-        boolean dono =
-                treino.getAluno() != null
-                        && logado.getAluno() != null
-                        && treino.getAluno().getId().equals(logado.getAluno().getId());
+        boolean alunoDono =
+                logado.getAluno() != null &&
+                        treino.getAluno() != null &&
+                        treino.getAluno().getId().equals(logado.getAluno().getId());
 
-        if (!admin && !dono) {
+        if (!(admin || gerente || professor || alunoDono)) {
             throw new AccessDeniedException("Sem permissão");
         }
     }
@@ -51,8 +54,7 @@ public class TreinoExercicioService {
 
         User logado = getUser(userId);
 
-        Treino treino = treinoRepository.findById(dto.treinoId())
-                .orElseThrow(() -> new NotFoundException("Treino não encontrado"));
+        Treino treino = buscarTreinoAutorizado(dto.treinoId(), logado);
 
         Exercicio exercicio = exercicioRepository.findById(dto.exercicioId())
                 .orElseThrow(() -> new NotFoundException("Exercício não encontrado"));
@@ -119,8 +121,15 @@ public class TreinoExercicioService {
                 .toList();
     }
 
-    public TreinoExercicioResponseDto buscarPorId(TreinoExercicioId id) {
-        return toResponseDto(buscarTreinoExercicioPorId(id));
+    public TreinoExercicioResponseDto buscarPorId(TreinoExercicioId id, Integer userId) {
+
+        User logado = getUser(userId);
+
+        TreinoExercicio te = buscarTreinoExercicioPorId(id);
+
+        validarPermissao(te.getTreino(), logado);
+
+        return toResponseDto(te);
     }
 
     public void deletar(TreinoExercicioId id, Integer userId){
@@ -156,6 +165,16 @@ public class TreinoExercicioService {
     private User getUser(Integer userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
+    }
+
+    private Treino buscarTreinoAutorizado(Integer treinoId, User logado) {
+
+        Treino treino = treinoRepository.findById(treinoId)
+                .orElseThrow(() -> new NotFoundException("Treino não encontrado"));
+
+        validarPermissao(treino, logado);
+
+        return treino;
     }
 
 

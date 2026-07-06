@@ -25,7 +25,7 @@ public class TreinoExercicioController {
         this.treinoexercicioService = treinoexercicioService;
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'PROFESSOR', 'ALUNO')")
     @PostMapping
     public ResponseEntity<TreinoExercicioResponseDto> cadastrar(
             @RequestBody @Valid TreinoExercicioDto dto,
@@ -34,7 +34,7 @@ public class TreinoExercicioController {
         return ResponseEntity.status(201).body(treinoexercicioService.cadastrar(dto, user.getId()));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'PROFESSOR', 'ALUNO')")
     @PatchMapping("/{treinoId}/{exercId}")
     public ResponseEntity<TreinoExercicioResponseDto> atualizar(
             @PathVariable Integer treinoId,
@@ -47,7 +47,7 @@ public class TreinoExercicioController {
         return ResponseEntity.ok(treinoexercicioService.atualizar(id, dto, user.getId()));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'ALUNO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'PROFESSOR', 'ALUNO')")
     @DeleteMapping("/{treinoId}/{exercId}")
     public ResponseEntity<Void> deletar(
             @PathVariable Integer treinoId,
@@ -61,16 +61,19 @@ public class TreinoExercicioController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'PROFESSOR')")
     @GetMapping
     public ResponseEntity<List<TreinoExercicioResponseDto>> listar() {
         return ResponseEntity.ok(treinoexercicioService.listar());
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'PROFESSOR', 'ALUNO')")
     @GetMapping("/{treinoId}/{exercId}")
     public ResponseEntity<TreinoExercicioResponseDto> buscarPorId(@PathVariable Integer treinoId,
-                                         @PathVariable Integer exercId){
+                                         @PathVariable Integer exercId,
+                                                                  @AuthenticationPrincipal CustomUserDetails user){
 
         TreinoExercicioId id = new TreinoExercicioId(treinoId, exercId);
-        return ResponseEntity.ok(treinoexercicioService.buscarPorId(id));
+        return ResponseEntity.ok(treinoexercicioService.buscarPorId(id, user.getId()));
     }
 }
