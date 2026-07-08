@@ -3,11 +3,11 @@ package com.wictor.service;
 import com.wictor.model.Financeiro;
 import com.wictor.repository.FinanceiroRepository;
 import lombok.RequiredArgsConstructor;
+import org.jfree.chart.renderer.category.BarRenderer;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import com.lowagie.text.*;
@@ -16,6 +16,18 @@ import java.io.ByteArrayOutputStream;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.JFreeChart;
+import org.jfree.data.general.DefaultPieDataset;
+
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
+import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
+import java.text.DecimalFormat;
+import org.jfree.chart.plot.PiePlot;
+import org.jfree.data.category.DefaultCategoryDataset;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +49,82 @@ public class FinanceiroRelatorioService {
         BigDecimal saidas = calcularSaidas(movimentacoes);
 
         return montarPdf(movimentacoes, inicio, fim, entradas, saidas);
+    }
+
+    private Image gerarGraficoPizza(
+            BigDecimal entradas,
+            BigDecimal saidas
+    ) {
+        try {
+
+            DefaultPieDataset dataset = new DefaultPieDataset();
+
+            dataset.setValue("Receitas", entradas.doubleValue());
+            dataset.setValue("Despesas", saidas.doubleValue());
+
+            JFreeChart grafico = ChartFactory.createPieChart("Resumo Financeiro", dataset, true, true, false);
+
+            grafico.getTitle().setFont(new java.awt.Font("Helvetica", java.awt.Font.BOLD, 18));
+
+            PiePlot plot = (PiePlot) grafico.getPlot();
+            plot.setSectionPaint("Receitas", new java.awt.Color(46, 125, 50));
+            plot.setSectionPaint("Despesas", new java.awt.Color(198, 40, 40));
+
+            plot.setLabelGenerator(new StandardPieSectionLabelGenerator("{0}: {2}",
+                    new DecimalFormat("0"), new DecimalFormat("0.0%")));
+
+            plot.setLabelFont(new java.awt.Font("Helvetica", java.awt.Font.PLAIN, 12));
+
+            plot.setSimpleLabels(false);
+
+            BufferedImage imagem = grafico.createBufferedImage(500, 300);
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+            ImageIO.write(imagem, "png", baos);
+
+            return Image.getInstance(baos.toByteArray());
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao gerar gráfico financeiro", e);
+        }
+    }
+
+    private Image gerarGraficoBarras(List<Financeiro> movimentacoes) {
+
+        try {
+
+            DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+            for (Financeiro financeiro : movimentacoes) {
+
+                String tipo = financeiro.getTipo().getDescricao();
+
+                String serie = financeiro.getTipo().isEntrada() ? "Receitas" : "Despesas";
+
+                dataset.addValue(financeiro.getValor().doubleValue(), serie, tipo);
+            }
+
+            JFreeChart grafico = ChartFactory.createBarChart("Movimentações por Tipo", "Tipo", "Valor (R$)", dataset);
+
+            grafico.getTitle().setFont(new java.awt.Font("Helvetica", java.awt.Font.BOLD, 18));
+
+            BarRenderer renderer = (BarRenderer) grafico.getCategoryPlot().getRenderer();
+
+            renderer.setSeriesPaint(0, new java.awt.Color(46,125,50));
+            renderer.setSeriesPaint(1, new java.awt.Color(198,40,40));
+
+            BufferedImage imagem = grafico.createBufferedImage(600,350);
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+            ImageIO.write(imagem, "png", baos);
+
+            return Image.getInstance(baos.toByteArray());
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao gerar gráfico de barras", e);
+        }
     }
 
     private List<Financeiro> buscarMovimentacoes(LocalDate inicio, LocalDate fim) {
@@ -165,6 +253,22 @@ public class FinanceiroRelatorioService {
             document.add(new Paragraph(
                     "Saldo: " + MOEDA.format(saldo),
                     resumo));
+
+            document.add(Chunk.NEWLINE);
+            document.add(Chunk.NEWLINE);
+
+            Image pizza = gerarGraficoPizza(entradas, saidas);
+
+            pizza.scaleToFit(400, 250);
+            pizza.setAlignment(Element.ALIGN_CENTER);
+            document.add(pizza);
+
+            Image barras = gerarGraficoBarras(movimentacoes);
+
+            barras.scaleToFit(500,300);
+            barras.setAlignment(Element.ALIGN_CENTER);
+
+            document.add(barras);
 
             document.close();
 
