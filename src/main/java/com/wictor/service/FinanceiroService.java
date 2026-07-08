@@ -8,6 +8,7 @@ import com.wictor.dto.itemfinanceiro.ItemFinanceiroResponseDto;
 import com.wictor.dto.venda.VendaDto;
 import com.wictor.dto.venda.VendaResponseDto;
 import com.wictor.enums.Role;
+import com.wictor.enums.TipoFinanceiro;
 import com.wictor.exception.NotFoundException;
 import com.wictor.exception.RegraException;
 import com.wictor.model.Financeiro;
@@ -40,7 +41,10 @@ public class FinanceiroService {
         this.funcionarioRepository = funcionarioRepository;
     }
 
-    public FinanceiroResponseDto cadastrar(FinanceiroDto financeiroDTO) {
+    public FinanceiroResponseDto cadastrar(FinanceiroDto financeiroDTO, CustomUserDetails user) {
+
+        Funcionario funcionario = funcionarioRepository.findById(user.getId())
+                .orElseThrow(() -> new NotFoundException("Funcionário não encontrado"));
 
         Financeiro financeiro = financeiroRepository.save(
                 Financeiro.builder()
@@ -48,6 +52,7 @@ public class FinanceiroService {
                         .tipo(financeiroDTO.tipo())
                         .data(financeiroDTO.data())
                         .valor(financeiroDTO.valor())
+                        .funcionario(funcionario)
                         .build()
         );
 
@@ -62,7 +67,7 @@ public class FinanceiroService {
 
         Financeiro financeiro = Financeiro.builder()
                 .nome("Venda de Produtos")
-                .tipo("ENTRADA")
+                .tipo(TipoFinanceiro.VENDA)
                 .data(LocalDate.now())
                 .funcionario(funcionario)
                 .build();
@@ -137,7 +142,7 @@ public class FinanceiroService {
             financeiro.setNome(dto.nome());
         }
 
-        if (dto.tipo() != null && !dto.tipo().isBlank()) {
+        if (dto.tipo() != null) {
             financeiro.setTipo(dto.tipo());
         }
 

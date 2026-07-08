@@ -1,5 +1,6 @@
 package com.wictor.model;
 
+import com.wictor.enums.TipoFinanceiro;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,8 +26,9 @@ public class Financeiro {
     @Column(name = "Fin_nome", nullable = false)
     private String nome;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "Fin_tipo", nullable = false)
-    private String tipo;
+    private TipoFinanceiro tipo;
 
     @Column(name = "Fin_data", nullable = false)
     private LocalDate data;

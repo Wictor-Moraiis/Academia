@@ -6,13 +6,17 @@ import com.wictor.dto.financeiro.FinanceiroUpdateDto;
 import com.wictor.dto.venda.VendaDto;
 import com.wictor.dto.venda.VendaResponseDto;
 import com.wictor.security.CustomUserDetails;
+import com.wictor.service.FinanceiroRelatorioService;
 import com.wictor.service.FinanceiroService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -20,17 +24,20 @@ import java.util.List;
 public class FinanceiroController {
 
     private final FinanceiroService financeiroService;
+    private final FinanceiroRelatorioService financeiroRelatorioService;
 
-    public FinanceiroController(FinanceiroService financeiroService) {
+    public FinanceiroController(FinanceiroService financeiroService,
+    FinanceiroRelatorioService financeiroRelatorioService) {
         this.financeiroService = financeiroService;
+        this.financeiroRelatorioService = financeiroRelatorioService;
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA')")
     @PostMapping
     public ResponseEntity<FinanceiroResponseDto> cadastrar(
-            @RequestBody @Valid FinanceiroDto dto) {
-
-        return ResponseEntity.status(201).body(financeiroService.cadastrar(dto));
+            @RequestBody FinanceiroDto dto,
+            @AuthenticationPrincipal CustomUserDetails user){
+        return ResponseEntity.ok(financeiroService.cadastrar(dto, user));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA')")
@@ -72,5 +79,16 @@ public class FinanceiroController {
             @AuthenticationPrincipal CustomUserDetails user) {
 
         return ResponseEntity.ok(financeiroService.buscarPorId(id, user));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
+    @GetMapping("/relatorio")
+    public ResponseEntity<byte[]> gerarRelatorio(
+            @RequestParam LocalDate inicio,
+            @RequestParam LocalDate fim) {
+
+        byte[] pdf = financeiroRelatorioService.gerarRelatorio(inicio, fim);
+
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=relatorio-financeiro.pdf").contentType(MediaType.APPLICATION_PDF).body(pdf);
     }
 }
