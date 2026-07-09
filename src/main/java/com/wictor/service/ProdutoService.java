@@ -3,6 +3,7 @@ package com.wictor.service;
 import com.wictor.dto.produto.ProdutoDto;
 import com.wictor.dto.produto.ProdutoResponseDto;
 import com.wictor.dto.produto.ProdutoUpdateDto;
+import com.wictor.enums.AcaoLog;
 import com.wictor.exception.NotFoundException;
 import com.wictor.exception.RegraException;
 import com.wictor.model.Produto;
@@ -11,7 +12,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
+import com.wictor.annotation.Auditar;
+import com.wictor.audit.AuditoriaContext;
+import com.wictor.audit.AuditoriaInfo;
 import java.util.List;
 
 @Service
@@ -30,6 +33,7 @@ public class ProdutoService {
     private String uploadDir;
     private static final String PREFIXO_IMAGEM  = "produto";
 
+    @Auditar(acao = AcaoLog.CADASTRO)
     @Transactional
     public ProdutoResponseDto cadastrar(ProdutoDto produtoDTO, MultipartFile foto) {
 
@@ -47,15 +51,34 @@ public class ProdutoService {
         );
 
         atualizarFoto(produto, foto);
+        produtoRepository.flush();
 
-        return toResponseDto(produtoRepository.save(produto));
-
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .depois(produto)
+                        .entidade("Produto")
+                        .entidadeId(produto.getId())
+                        .build()
+        );
+        return toResponseDto(produto);
     }
 
+    @Auditar(acao = AcaoLog.ALTERACAO)
     @Transactional
     public ProdutoResponseDto atualizar(Integer id, ProdutoUpdateDto dto , MultipartFile foto) {
         Produto produto = buscarProdutoPorId(id);
         validarAtivo(produto);
+
+        Produto produtoAntes = Produto.builder()
+                .id(produto.getId())
+                .nome(produto.getNome())
+                .desc(produto.getDesc())
+                .preco(produto.getPreco())
+                .qtd(produto.getQtd())
+                .qtd_min(produto.getQtd_min())
+                .foto(produto.getFoto())
+                .ativo(produto.isAtivo())
+                .build();
 
         if (dto.nome() != null && !dto.nome().isBlank()) {
 
@@ -82,26 +105,66 @@ public class ProdutoService {
 
         atualizarFoto(produto, foto);
 
-        return toResponseDto(produtoRepository.save(produto));
+        Produto produtoSalvo = produtoRepository.save(produto);
+
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(produtoAntes)
+                        .depois(produtoSalvo)
+                        .entidade("Produto")
+                        .entidadeId(produtoSalvo.getId())
+                        .build()
+        );
+
+        return toResponseDto(produtoSalvo);
+
     }
 
-    public void desativar(Integer id) {
-        alterarStatus(id, false);
-    }
-
-    public void reativar(Integer id) {
-        alterarStatus(id, true);
-    }
-
+    @Auditar(acao = AcaoLog.ALTERACAO)
     @Transactional
-    private void alterarStatus(Integer id, boolean ativo) {
+    public void desativar(Integer id) {
+
+        Produto antes = copiarProduto(buscarProdutoPorId(id));
+
         Produto produto = buscarProdutoPorId(id);
+        produto.setAtivo(false);
+
+        Produto depois = produtoRepository.save(produto);
 
 
-        produto.setAtivo(ativo);
-        produtoRepository.save(produto);
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(antes)
+                        .depois(depois)
+                        .entidade("Produto")
+                        .entidadeId(id)
+                        .build()
+        );
     }
 
+    @Auditar(acao = AcaoLog.ALTERACAO)
+    @Transactional
+    public void reativar(Integer id) {
+
+        Produto antes = copiarProduto(buscarProdutoPorId(id));
+
+        Produto produto = buscarProdutoPorId(id);
+        produto.setAtivo(true);
+
+        Produto depois = produtoRepository.save(produto);
+
+
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(antes)
+                        .depois(depois)
+                        .entidade("Produto")
+                        .entidadeId(id)
+                        .build()
+        );
+    }
+
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de produtos.")
     public List<ProdutoResponseDto> listar() {
         return produtoRepository.findAll()
                 .stream()
@@ -122,19 +185,27 @@ public class ProdutoService {
         );
     }
 
-    public ProdutoResponseDto buscarPorId(Integer id) {
-        return toResponseDto(buscarProdutoPorId(id));
-    }
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de produto por ID.")
+    public ProdutoResponseDto buscarPorId(Integer id) {return toResponseDto(buscarProdutoPorId(id));}
 
     private Produto buscarProdutoPorId(Integer id) {
         return produtoRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Produto não encontrado"));
     }
 
+    @Auditar(acao = AcaoLog.EXCLUSAO)
     @Transactional
     public void deletar(Integer id) {
 
         Produto produto = buscarProdutoPorId(id);
+
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(produto)
+                        .entidade("Produto")
+                        .entidadeId(id)
+                        .build()
+        );
 
         imageService.deletarImagem(uploadDir, produto.getFoto());
 
@@ -173,5 +244,19 @@ public class ProdutoService {
                 .ifPresent(produto -> {
                     throw new RegraException("Já existe um produto com esse nome.");
                 });
+    }
+
+    private Produto copiarProduto(Produto produto) {
+
+        return Produto.builder()
+                .id(produto.getId())
+                .nome(produto.getNome())
+                .desc(produto.getDesc())
+                .preco(produto.getPreco())
+                .qtd(produto.getQtd())
+                .qtd_min(produto.getQtd_min())
+                .foto(produto.getFoto())
+                .ativo(produto.isAtivo())
+                .build();
     }
 }
