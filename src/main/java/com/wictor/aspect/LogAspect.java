@@ -29,15 +29,11 @@ public class LogAspect {
     @Around("@annotation(auditar)")
     public Object registrarLog(ProceedingJoinPoint joinPoint, Auditar auditar) throws Throwable {
 
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         User usuario = null;
 
-        if (authentication != null
-                && authentication.isAuthenticated()
-                && authentication.getPrincipal() instanceof CustomUserDetails customUserDetails) {
-
+        if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof CustomUserDetails customUserDetails) {
             usuario = customUserDetails.getUser();
         }
 
@@ -53,13 +49,10 @@ public class LogAspect {
                     new LogDto(
                             usuario,
                             auditar.acao(),
-                            info != null ? info.getEntidade() : joinPoint.getTarget().getClass().getSimpleName(),
+                            obterEntidade(info, joinPoint),
                             info != null ? info.getEntidadeId() : null,
                             descricao,
-                            true,
-                            request.getMethod(),
-                            request.getRequestURI(),
-                            request.getRemoteAddr()
+                            true
                     )
             );
 
@@ -73,13 +66,10 @@ public class LogAspect {
                     new LogDto(
                             usuario,
                             auditar.acao(),
-                            info != null ? info.getEntidade() : joinPoint.getTarget().getClass().getSimpleName(),
+                            obterEntidade(info, joinPoint),
                             info != null ? info.getEntidadeId() : null,
                             e.getMessage(),
-                            false,
-                            request.getMethod(),
-                            request.getRequestURI(),
-                            request.getRemoteAddr()
+                            false
                     )
             );
 
@@ -107,6 +97,31 @@ public class LogAspect {
         }
 
         return "Operação realizada.";
+    }
+
+    private String obterEntidade(AuditoriaInfo info, ProceedingJoinPoint joinPoint) {
+
+        if (info != null && info.getEntidade() != null) {
+            return info.getEntidade();
+        }
+
+        String[] partes = request.getRequestURI().split("/");
+
+        if (partes.length >= 2) {
+            String entidade = partes[1];
+
+            if (entidade.endsWith("s")) {
+                entidade = entidade.substring(0, entidade.length() - 1);
+            }
+
+            return Character.toUpperCase(entidade.charAt(0))
+                    + entidade.substring(1);
+        }
+
+        return joinPoint.getTarget()
+                .getClass()
+                .getSimpleName()
+                .replace("Service", "");
     }
 
 }

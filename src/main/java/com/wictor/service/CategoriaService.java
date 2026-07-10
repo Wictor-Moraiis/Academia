@@ -1,12 +1,16 @@
 package com.wictor.service;
 
+import com.wictor.annotation.Auditar;
 import com.wictor.dto.categoria.CategoriaDto;
 import com.wictor.dto.categoria.CategoriaResponseDto;
 import com.wictor.dto.categoria.CategoriaUpdateDto;
+import com.wictor.enums.AcaoLog;
 import com.wictor.exception.NotFoundException;
 import com.wictor.model.Categoria;
 import com.wictor.repository.CategoriaRepository;
 import org.springframework.stereotype.Service;
+import com.wictor.audit.AuditoriaContext;
+import com.wictor.audit.AuditoriaInfo;
 import java.util.List;
 
 @Service
@@ -18,6 +22,7 @@ public class CategoriaService {
         this.categoriaRepository = categoriaRepository;
     }
 
+    @Auditar(acao = AcaoLog.CADASTRO)
     public CategoriaResponseDto cadastrar(CategoriaDto categoriaDTO) {
 
         Categoria categoria = categoriaRepository.save(
@@ -28,11 +33,21 @@ public class CategoriaService {
                         .build()
         );
 
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .depois(categoria)
+                        .entidade("Categoria")
+                        .entidadeId(categoria.getId())
+                        .build()
+        );
+
         return toResponseDto(categoria);
     }
 
+    @Auditar(acao = AcaoLog.ALTERACAO)
     public CategoriaResponseDto atualizar(Integer id, CategoriaUpdateDto dto) {
         Categoria categoria = buscarCategoriaPorId(id);
+        Categoria categoriaAntes = copiarCategoria(categoria);
 
         if (dto.nome() != null && !dto.nome().isBlank()) {
             categoria.setNome(dto.nome());
@@ -46,11 +61,21 @@ public class CategoriaService {
             categoria.setRole(dto.role());
         }
 
-        categoriaRepository.save(categoria);
+        Categoria categoriaSalva = categoriaRepository.save(categoria);
+
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(categoriaAntes)
+                        .depois(categoriaSalva)
+                        .entidade("Categoria")
+                        .entidadeId(categoriaSalva.getId())
+                        .build()
+        );
 
         return toResponseDto(categoria);
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de categorias.")
     public List<CategoriaResponseDto> listar() {
 
         return categoriaRepository.findAll()
@@ -68,6 +93,7 @@ public class CategoriaService {
         );
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de categoria por ID.")
     public CategoriaResponseDto buscarPorId(Integer id) {
 
         return toResponseDto(buscarCategoriaPorId(id));
@@ -78,10 +104,29 @@ public class CategoriaService {
                 .orElseThrow(() -> new NotFoundException("Categoria não encontrada"));
     }
 
+    @Auditar(acao = AcaoLog.EXCLUSAO)
     public void deletar(Integer id) {
 
         Categoria categoria = buscarCategoriaPorId(id);
 
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(categoria)
+                        .entidade("Categoria")
+                        .entidadeId(id)
+                        .build()
+        );
+
         categoriaRepository.delete(categoria);
+    }
+
+    private Categoria copiarCategoria(Categoria categoria) {
+
+        return Categoria.builder()
+                .id(categoria.getId())
+                .nome(categoria.getNome())
+                .salario(categoria.getSalario())
+                .role(categoria.getRole())
+                .build();
     }
 }

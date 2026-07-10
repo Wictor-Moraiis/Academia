@@ -15,12 +15,5 @@ public record LogDto(
 
         String descricao,
 
-        Boolean sucesso,
-
-        String metodo,
-
-        String url,
-
-        String ip
-
+        Boolean sucesso
 ) {}
