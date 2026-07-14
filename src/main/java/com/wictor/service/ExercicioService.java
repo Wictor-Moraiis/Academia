@@ -149,7 +149,7 @@ public class ExercicioService {
                 AuditoriaInfo.builder()
                         .antes(exercicio)
                         .entidade("Exercicio")
-                        .entidadeId(id)
+                        .entidadeId(exercicio.getId())
                         .build()
         );
 

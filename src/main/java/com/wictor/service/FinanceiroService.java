@@ -232,7 +232,7 @@ public class FinanceiroService {
                 AuditoriaInfo.builder()
                         .antes(financeiro)
                         .entidade("Financeiro")
-                        .entidadeId(id)
+                        .entidadeId(financeiro.getId())
                         .build()
         );
 

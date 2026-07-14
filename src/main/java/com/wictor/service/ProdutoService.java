@@ -195,7 +195,7 @@ public class ProdutoService {
                 AuditoriaInfo.builder()
                         .antes(produto)
                         .entidade("Produto")
-                        .entidadeId(id)
+                        .entidadeId(produto.getId())
                         .build()
         );
 

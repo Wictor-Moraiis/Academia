@@ -118,7 +118,7 @@ public class CategoriaService {
                 AuditoriaInfo.builder()
                         .antes(categoria)
                         .entidade("Categoria")
-                        .entidadeId(id)
+                        .entidadeId(categoria.getId())
                         .build()
         );
 

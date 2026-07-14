@@ -96,7 +96,6 @@ public class MaquinaService {
 
         Maquina depois = maquinaRepository.save(maquina);
 
-
         AuditoriaContext.registrar(
                 AuditoriaInfo.builder()
                         .antes(antes)
@@ -116,7 +115,6 @@ public class MaquinaService {
         maquina.setAtiva(true);
 
         Maquina depois = maquinaRepository.save(maquina);
-
 
         AuditoriaContext.registrar(
                 AuditoriaInfo.builder()
@@ -138,7 +136,7 @@ public class MaquinaService {
                 AuditoriaInfo.builder()
                         .antes(maquina)
                         .entidade("Maquina")
-                        .entidadeId(id)
+                        .entidadeId(maquina.getId())
                         .build()
         );
 
