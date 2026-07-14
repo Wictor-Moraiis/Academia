@@ -1,18 +1,21 @@
 package com.wictor.service;
 
+import com.wictor.annotation.Auditar;
+import com.wictor.audit.AuditoriaContext;
+import com.wictor.audit.AuditoriaInfo;
 import com.wictor.dto.treino.TreinoDto;
 import com.wictor.dto.treino.TreinoResponseDto;
 import com.wictor.dto.treino.TreinoUpdateDto;
+import com.wictor.enums.AcaoLog;
 import com.wictor.enums.Role;
 import com.wictor.exception.NotFoundException;
-import com.wictor.model.Aluno;
-import com.wictor.model.Treino;
-import com.wictor.model.User;
+import com.wictor.model.*;
 import com.wictor.repository.AlunoRepository;
 import com.wictor.repository.TreinoRepository;
 import com.wictor.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -34,6 +37,8 @@ public class TreinoService {
         this.userRepository = userRepository;
     }
 
+    @Auditar(acao = AcaoLog.CADASTRO)
+    @Transactional
     public TreinoResponseDto cadastrar(TreinoDto treinoDTO, Integer userId) {
 
         Aluno aluno = obterAluno(treinoDTO, userId);
@@ -71,14 +76,25 @@ public class TreinoService {
                         .build()
         );
 
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .depois(treino)
+                        .entidade("Treino")
+                        .entidadeId(treino.getId())
+                        .build()
+        );
+
         return toResponseDto(treino);
 
     }
 
+    @Auditar(acao = AcaoLog.ALTERACAO)
+    @Transactional
     public TreinoResponseDto atualizar(Integer id, TreinoUpdateDto dto,  Integer userId) {
 
         boolean alterado = false;
         Treino treino = buscarTreinoPorId(id);
+        Treino antes = copiarTreino(treino);
         validarPermissao(treino, userId);
 
         if (dto.nome() != null && !dto.nome().isBlank()) {
@@ -127,9 +143,19 @@ public class TreinoService {
             treino.setModificado(LocalDate.now());
         }
 
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(antes)
+                        .depois(treino)
+                        .entidade("Treino")
+                        .entidadeId(treino.getId())
+                        .build()
+        );
+
         return toResponseDto(treinoRepository.save(treino));
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de treinos.")
     public List<TreinoResponseDto> listar() {
         return treinoRepository.findAll()
                 .stream()
@@ -137,6 +163,7 @@ public class TreinoService {
                 .toList();
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de treino por ID.")
     public TreinoResponseDto buscarPorId(Integer id, Integer userId) {
 
         User user = userRepository.findById(userId)
@@ -153,30 +180,60 @@ public class TreinoService {
         return toResponseDto(treino);
     }
 
+    @Auditar(acao = AcaoLog.ALTERACAO)
+    @Transactional
     public void desativar(Integer id, Integer userId) {
 
         Treino treino = buscarTreinoPorId(id);
-
+        Treino antes = copiarTreino(treino);
         validarPermissao(treino, userId);
+        treino.setAtivo(false);
 
-        alterarStatus(id, false);
+        Treino depois = treinoRepository.save(treino);
+
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(antes)
+                        .depois(depois)
+                        .entidade("Treino")
+                        .entidadeId(id)
+                        .build()
+        );
     }
 
+    @Auditar(acao = AcaoLog.ALTERACAO)
+    @Transactional
     public void reativar(Integer id) {
-        alterarStatus(id, true);
-    }
 
-    private void alterarStatus(Integer id, boolean ativo) {
         Treino treino = buscarTreinoPorId(id);
+        Treino antes = copiarTreino(treino);
+        treino.setAtivo(true);
 
-        treino.setAtivo(ativo);
+        Treino depois = treinoRepository.save(treino);
 
-        treinoRepository.save(treino);
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(antes)
+                        .depois(depois)
+                        .entidade("Treino")
+                        .entidadeId(id)
+                        .build()
+        );
     }
 
+    @Auditar(acao = AcaoLog.EXCLUSAO)
+    @Transactional
     public void deletar(Integer id) {
 
        Treino treino = buscarTreinoPorId(id);
+
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(treino)
+                        .entidade("Treino")
+                        .entidadeId(treino.getId())
+                        .build()
+        );
 
         treinoRepository.delete(treino);
     }
@@ -228,5 +285,21 @@ public class TreinoService {
         }
 
         return logado.getAluno();
+    }
+
+    private Treino copiarTreino(Treino treino) {
+
+        return Treino.builder()
+                .id(treino.getId())
+                .nome(treino.getNome())
+                .ObjTreino(treino.getObjTreino())
+                .inicio(treino.getInicio())
+                .fim(treino.getFim())
+                .criado(treino.getCriado())
+                .modificado(treino.getModificado())
+                .obs(treino.getObs())
+                .ativo(treino.isAtivo())
+                .aluno(treino.getAluno())
+                .build();
     }
 }
