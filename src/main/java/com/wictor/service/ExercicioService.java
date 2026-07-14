@@ -1,8 +1,12 @@
 package com.wictor.service;
 
+import com.wictor.annotation.Auditar;
+import com.wictor.audit.AuditoriaContext;
+import com.wictor.audit.AuditoriaInfo;
 import com.wictor.dto.exercicio.ExercicioDto;
 import com.wictor.dto.exercicio.ExercicioResponseDto;
 import com.wictor.dto.exercicio.ExercicioUpdateDto;
+import com.wictor.enums.AcaoLog;
 import com.wictor.exception.NotFoundException;
 import com.wictor.model.Exercicio;
 import com.wictor.model.Maquina;
@@ -35,6 +39,7 @@ public class ExercicioService {
         this.imageService = imageService;
     }
 
+    @Auditar(acao = AcaoLog.CADASTRO)
     @Transactional
     public ExercicioResponseDto cadastrar(ExercicioDto exercicioDTO, MultipartFile foto) {
 
@@ -54,12 +59,23 @@ public class ExercicioService {
         Exercicio savedExercicio = exercicioRepository.save(exercicio);
 
         atualizarFoto(savedExercicio, foto);
+
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .depois(savedExercicio)
+                        .entidade("Exercicio")
+                        .entidadeId(savedExercicio.getId())
+                        .build()
+        );
         return toResponseDto(savedExercicio);
     }
 
+    @Auditar(acao = AcaoLog.ALTERACAO)
     @Transactional
     public ExercicioResponseDto atualizar(Integer id, ExercicioUpdateDto dto, MultipartFile foto) {
+
         Exercicio exercicio = buscarExercicioPorId(id);
+        Exercicio exercicioAntes = copiarExercicio(exercicio);
 
         if (dto.nome() != null && !dto.nome().isBlank()) {
             exercicio.setNome(dto.nome());
@@ -77,9 +93,22 @@ public class ExercicioService {
 
         atualizarFoto(exercicio, foto);
 
+        Exercicio exercicioSalvo = exercicioRepository.save(exercicio);
+
+
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(exercicioAntes)
+                        .depois(exercicioSalvo)
+                        .entidade("Exercicio")
+                        .entidadeId(exercicioSalvo.getId())
+                        .build()
+        );
+
         return toResponseDto(exercicio);
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de exercicios.")
     public List<ExercicioResponseDto> listar() {
 
         return exercicioRepository.findAll()
@@ -88,6 +117,7 @@ public class ExercicioService {
                 .toList();
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de exercicio por ID.")
     public ExercicioResponseDto buscarPorId(Integer id) {
 
         return toResponseDto(buscarExercicioPorId(id));
@@ -109,10 +139,20 @@ public class ExercicioService {
         );
     }
 
+    @Auditar(acao = AcaoLog.EXCLUSAO)
     @Transactional
     public void deletar(Integer id) {
 
         Exercicio exercicio = buscarExercicioPorId(id);
+
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(exercicio)
+                        .entidade("Exercicio")
+                        .entidadeId(id)
+                        .build()
+        );
+
         imageService.deletarImagem(uploadDir, exercicio.getFoto());
         exercicioRepository.delete(exercicio);
     }
@@ -133,6 +173,17 @@ public class ExercicioService {
                         PREFIXO_IMAGEM
                 )
         );
+    }
+
+    private Exercicio copiarExercicio(Exercicio exercicio) {
+
+        return Exercicio.builder()
+                .id(exercicio.getId())
+                .nome(exercicio.getNome())
+                .obs(exercicio.getObs())
+                .foto(exercicio.getFoto())
+                .maquina(exercicio.getMaquina())
+                .build();
     }
 }
 
