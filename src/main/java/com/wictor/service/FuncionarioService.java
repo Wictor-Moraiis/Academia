@@ -1,11 +1,16 @@
 package com.wictor.service;
 
+import com.wictor.annotation.Auditar;
+import com.wictor.audit.AuditoriaContext;
+import com.wictor.audit.AuditoriaInfo;
 import com.wictor.dto.funcionario.FuncionarioDto;
 import com.wictor.dto.funcionario.FuncionarioResponseDto;
 import com.wictor.dto.funcionario.FuncionarioUpdateDto;
 import com.wictor.dto.user.UserResponseDto;
+import com.wictor.enums.AcaoLog;
 import com.wictor.enums.Role;
 import com.wictor.exception.*;
+import com.wictor.model.Aluno;
 import com.wictor.model.Categoria;
 import com.wictor.model.Funcionario;
 import com.wictor.model.User;
@@ -33,6 +38,7 @@ public class FuncionarioService {
         this.categoriaRepository = categoriaRepository;
     }
 
+    @Auditar(acao = AcaoLog.CADASTRO)
     @Transactional
     public FuncionarioResponseDto cadastrar(FuncionarioDto dto, MultipartFile foto) {
 
@@ -65,12 +71,23 @@ public class FuncionarioService {
                         .build()
         );
 
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .depois(funcionario)
+                        .entidade("Funcionario")
+                        .entidadeId(funcionario.getId())
+                        .build()
+        );
+
         return toResponseDto(funcionario);
     }
 
+    @Auditar(acao = AcaoLog.ALTERACAO)
     @Transactional
     public FuncionarioResponseDto atualizar(Integer id, FuncionarioUpdateDto dto) {
+
         Funcionario funcionario = buscarFuncionarioPorId(id);
+        Funcionario antes = copiarFuncionario(funcionario);
 
         if (!funcionario.getUser().isAtivo()) {
             throw new RegraException("Usuário desativado");
@@ -123,17 +140,36 @@ public class FuncionarioService {
 
         funcionarioRepository.save(funcionario);
 
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(antes)
+                        .depois(funcionario)
+                        .entidade("Funcionario")
+                        .entidadeId(funcionario.getId())
+                        .build()
+        );
+
         return toResponseDto(funcionario);
     }
 
+    @Auditar(acao = AcaoLog.EXCLUSAO)
     @Transactional
     public void deletar(Integer id) {
 
         Funcionario funcionario = buscarFuncionarioPorId(id);
 
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(funcionario)
+                        .entidade("Funcionario")
+                        .entidadeId(funcionario.getId())
+                        .build()
+        );
+
         funcionarioRepository.delete(funcionario);
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de Funcionarios.")
     public List<FuncionarioResponseDto> listar() {
         return funcionarioRepository.findAll()
                 .stream()
@@ -141,6 +177,7 @@ public class FuncionarioService {
                 .toList();
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de Funcionario por ID.")
     public FuncionarioResponseDto buscarPorId(Integer id) {
 
         return toResponseDto(buscarFuncionarioPorId(id));
@@ -192,5 +229,22 @@ public class FuncionarioService {
 
     private void sincronizarRole(User user, Categoria categoria) {
         user.setRole(categoria.getRole());
+    }
+
+    private Funcionario copiarFuncionario(Funcionario funcionario) {
+
+        return Funcionario.builder()
+                .user(funcionario.getUser())
+                .id(funcionario.getId())
+                .cref(funcionario.getCref())
+                .tipoContrato(funcionario.getTipoContrato())
+                .turnoIni(funcionario.getTurnoIni())
+                .turnoFim(funcionario.getTurnoFim())
+                .banco(funcionario.getBanco())
+                .agencia(funcionario.getAgencia())
+                .conta(funcionario.getConta())
+                .tipoConta(funcionario.getTipoConta())
+                .categoria(funcionario.getCategoria())
+                .build();
     }
 }

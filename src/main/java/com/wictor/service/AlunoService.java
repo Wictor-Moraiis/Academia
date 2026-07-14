@@ -1,9 +1,13 @@
 package com.wictor.service;
 
+import com.wictor.annotation.Auditar;
+import com.wictor.audit.AuditoriaContext;
+import com.wictor.audit.AuditoriaInfo;
 import com.wictor.dto.aluno.AlunoDto;
 import com.wictor.dto.aluno.AlunoResponseDto;
 import com.wictor.dto.aluno.AlunoUpdateDto;
 import com.wictor.dto.user.UserResponseDto;
+import com.wictor.enums.AcaoLog;
 import com.wictor.enums.Role;
 import com.wictor.exception.ConflitoException;
 import com.wictor.exception.NotFoundException;
@@ -36,6 +40,7 @@ public class AlunoService {
         this.funcionarioRepository = funcionarioRepository;
     }
 
+    @Auditar(acao = AcaoLog.CADASTRO)
     @Transactional
     public AlunoResponseDto cadastrar(AlunoDto dto, MultipartFile foto) {
 
@@ -65,12 +70,23 @@ public class AlunoService {
 
         alunoRepository.save(aluno);
 
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .depois(aluno)
+                        .entidade("Aluno")
+                        .entidadeId(aluno.getId())
+                        .build()
+        );
+
         return toResponseDto(aluno);
     }
 
+    @Auditar(acao = AcaoLog.ALTERACAO)
     @Transactional
     public AlunoResponseDto atualizar(Integer id, AlunoUpdateDto dto) {
+
         Aluno aluno = buscarAlunoPorId(id);
+        Aluno antes = copiarAluno(aluno);
 
         if (!aluno.getUser().isAtivo()) {
             throw new RegraException("Usuário desativado");
@@ -111,16 +127,35 @@ public class AlunoService {
 
         alunoRepository.save(aluno);
 
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(antes)
+                        .depois(aluno)
+                        .entidade("Aluno")
+                        .entidadeId(aluno.getId())
+                        .build()
+        );
+
         return toResponseDto(aluno);
     }
 
+    @Auditar(acao = AcaoLog.EXCLUSAO)
     @Transactional
     public void deletar(Integer id) {
 
         Aluno aluno = buscarAlunoPorId(id);
+
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(aluno)
+                        .entidade("Aluno")
+                        .entidadeId(aluno.getId())
+                        .build()
+        );
         alunoRepository.delete(aluno);
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de Aluno por ID.")
     public AlunoResponseDto buscarPorId(Integer id) {
 
         Aluno aluno = alunoRepository.findById(id)
@@ -129,6 +164,7 @@ public class AlunoService {
         return toResponseDto(aluno);
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de Alunos.")
     public List<AlunoResponseDto> listar() {
 
         return alunoRepository.findAll()
@@ -172,5 +208,21 @@ public class AlunoService {
                 aluno.getVencimento(),
                 aluno.isVencido()
         );
+    }
+
+    private Aluno copiarAluno(Aluno aluno) {
+
+        return Aluno.builder()
+                .user(aluno.getUser())
+                .id(aluno.getId())
+                .saude(aluno.getSaude())
+                .obs(aluno.getObs())
+                .altura(aluno.getAltura())
+                .peso(aluno.getPeso())
+                .objetivo(aluno.getObjetivo())
+                .plano(aluno.getPlano())
+                .vencimento(aluno.getVencimento())
+                .vencido(aluno.isVencido())
+                .build();
     }
 }
