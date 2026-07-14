@@ -1,9 +1,14 @@
 package com.wictor.service;
 
+import com.wictor.annotation.Auditar;
+import com.wictor.audit.AuditoriaContext;
+import com.wictor.audit.AuditoriaInfo;
 import com.wictor.dto.plano.PlanoDto;
 import com.wictor.dto.plano.PlanoResponseDto;
 import com.wictor.dto.plano.PlanoUpdateDto;
+import com.wictor.enums.AcaoLog;
 import com.wictor.exception.NotFoundException;
+import com.wictor.model.Maquina;
 import com.wictor.model.Plano;
 import com.wictor.repository.PlanoRepository;
 import jakarta.transaction.Transactional;
@@ -19,6 +24,7 @@ public class PlanoService {
         this.planoRepository = planoRepository;
     }
 
+    @Auditar(acao = AcaoLog.CADASTRO)
     @Transactional
     public PlanoResponseDto cadastrar(PlanoDto planoDTO) {
 
@@ -30,13 +36,24 @@ public class PlanoService {
                         .build()
         );
 
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .depois(plano)
+                        .entidade("Plano")
+                        .entidadeId(plano.getId())
+                        .build()
+        );
+
         return toResponseDto(plano);
 
     }
 
+    @Auditar(acao = AcaoLog.ALTERACAO)
     @Transactional
     public PlanoResponseDto atualizar(Integer id, PlanoUpdateDto dto) {
-       Plano plano = buscarPlanoPorId(id);
+
+        Plano plano = buscarPlanoPorId(id);
+        Plano antes = copiarPlano(plano);
 
         if (dto.nome() != null && !dto.nome().isBlank()) {
             plano.setNome(dto.nome());
@@ -50,9 +67,19 @@ public class PlanoService {
             plano.setValidade(dto.validade());
         }
 
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(antes)
+                        .depois(plano)
+                        .entidade("Plano")
+                        .entidadeId(plano.getId())
+                        .build()
+        );
+
         return toResponseDto(planoRepository.save(plano));
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de planos.")
     public List<PlanoResponseDto> listar() {
         return planoRepository.findAll()
                 .stream()
@@ -69,6 +96,7 @@ public class PlanoService {
         );
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de plano por ID.")
     public PlanoResponseDto buscarPorId(Integer id) {
         return toResponseDto(buscarPlanoPorId(id));
     }
@@ -78,11 +106,30 @@ public class PlanoService {
                 .orElseThrow(() -> new NotFoundException("Plano não encontrado"));
     }
 
+    @Auditar(acao = AcaoLog.EXCLUSAO)
     @Transactional
     public void deletar(Integer id) {
 
         Plano plano = buscarPlanoPorId(id);
 
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(plano)
+                        .entidade("Plano")
+                        .entidadeId(id)
+                        .build()
+        );
+
         planoRepository.delete(plano);
+    }
+
+    private Plano copiarPlano(Plano plano) {
+
+        return Plano.builder()
+                .id(plano.getId())
+                .nome(plano.getNome())
+                .valor(plano.getValor())
+                .validade(plano.getValidade())
+                .build();
     }
 }
