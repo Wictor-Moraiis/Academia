@@ -27,7 +27,6 @@ import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
 import java.text.DecimalFormat;
 import org.jfree.chart.plot.PiePlot;
 import org.jfree.data.category.DefaultCategoryDataset;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
