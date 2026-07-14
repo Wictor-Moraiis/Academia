@@ -1,8 +1,12 @@
 package com.wictor.service;
 
+import com.wictor.annotation.Auditar;
+import com.wictor.audit.AuditoriaContext;
+import com.wictor.audit.AuditoriaInfo;
 import com.wictor.dto.treinoexercicio.TreinoExercicioDto;
 import com.wictor.dto.treinoexercicio.TreinoExercicioResponseDto;
 import com.wictor.dto.treinoexercicio.TreinoExercicioUpdateDto;
+import com.wictor.enums.AcaoLog;
 import com.wictor.enums.Role;
 import com.wictor.exception.NotFoundException;
 import com.wictor.model.*;
@@ -12,6 +16,7 @@ import com.wictor.repository.TreinoRepository;
 import com.wictor.repository.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -50,6 +55,8 @@ public class TreinoExercicioService {
         }
     }
 
+    @Auditar(acao = AcaoLog.CADASTRO)
+    @Transactional
     public TreinoExercicioResponseDto cadastrar(TreinoExercicioDto dto, Integer userId) {
 
         User logado = getUser(userId);
@@ -80,14 +87,25 @@ public class TreinoExercicioService {
 
         TreinoExercicio salvo = treinoexercicioRepository.save(treinoExercicio);
 
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .depois(salvo)
+                        .entidade("TreinoExercicio")
+                        .entidadeId(salvo.getId())
+                        .build()
+        );
+
         return toResponseDto(salvo);
     }
 
+    @Auditar(acao = AcaoLog.ALTERACAO)
+    @Transactional
     public TreinoExercicioResponseDto atualizar(TreinoExercicioId id, TreinoExercicioUpdateDto dto, Integer userId) {
 
         User logado = getUser(userId);
 
         TreinoExercicio treinoExercicio = buscarTreinoExercicioPorId(id);
+        TreinoExercicio antes = copiarTreinoExercicio(treinoExercicio);
 
         validarPermissao(treinoExercicio.getTreino(), logado);
 
@@ -111,9 +129,19 @@ public class TreinoExercicioService {
             treinoExercicio.setObs(dto.obs());
         }
 
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(antes)
+                        .depois(treinoExercicio)
+                        .entidade("TreinoExercicio")
+                        .entidadeId(treinoExercicio.getId())
+                        .build()
+        );
+
         return toResponseDto(treinoexercicioRepository.save(treinoExercicio));
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de exercicios em treinos.")
     public List<TreinoExercicioResponseDto> listar() {
         return treinoexercicioRepository.findAll()
                 .stream()
@@ -121,6 +149,7 @@ public class TreinoExercicioService {
                 .toList();
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de exercicio no treino por ID.")
     public TreinoExercicioResponseDto buscarPorId(TreinoExercicioId id, Integer userId) {
 
         User logado = getUser(userId);
@@ -132,6 +161,8 @@ public class TreinoExercicioService {
         return toResponseDto(te);
     }
 
+    @Auditar(acao = AcaoLog.EXCLUSAO)
+    @Transactional
     public void deletar(TreinoExercicioId id, Integer userId){
 
         User logado = getUser(userId);
@@ -139,6 +170,14 @@ public class TreinoExercicioService {
         TreinoExercicio treinoExercicio = buscarTreinoExercicioPorId(id);
 
         validarPermissao(treinoExercicio.getTreino(), logado);
+
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(treinoExercicio)
+                        .entidade("TreinoExercicio")
+                        .entidadeId(treinoExercicio.getId())
+                        .build()
+        );
 
         treinoexercicioRepository.delete(treinoExercicio);
     }
@@ -177,5 +216,16 @@ public class TreinoExercicioService {
         return treino;
     }
 
+    private TreinoExercicio copiarTreinoExercicio(TreinoExercicio treinoExercicio) {
+
+        return TreinoExercicio.builder()
+                .id(treinoExercicio.getId())
+                .ordem(treinoExercicio.getOrdem())
+                .carga(treinoExercicio.getCarga())
+                .series(treinoExercicio.getSeries())
+                .rep(treinoExercicio.getRep())
+                .obs(treinoExercicio.getObs())
+                .build();
+    }
 
 }

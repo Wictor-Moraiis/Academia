@@ -17,4 +17,9 @@ public class TreinoExercicioId implements Serializable {
 
     private Integer treinoId;
     private Integer exercId;
+
+    @Override
+    public String toString() {
+        return treinoId + "-" + exercId;
+    }
 }
