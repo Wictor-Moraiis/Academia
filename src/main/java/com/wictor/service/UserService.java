@@ -1,8 +1,13 @@
 package com.wictor.service;
 
+import com.wictor.annotation.Auditar;
+import com.wictor.audit.AuditoriaContext;
+import com.wictor.audit.AuditoriaInfo;
+import com.wictor.dto.log.LogDto;
 import com.wictor.dto.user.UserDto;
 import com.wictor.dto.user.UserResponseDto;
 import com.wictor.dto.user.UserUpdateDto;
+import com.wictor.enums.AcaoLog;
 import com.wictor.enums.Role;
 import com.wictor.exception.*;
 import com.wictor.model.User;
@@ -23,11 +28,13 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final ImageService imageService;
+    private final LogService logService;
 
-    public UserService(UserRepository userRepository, ImageService imageService)
+    public UserService(UserRepository userRepository, ImageService imageService, LogService logService)
     {
         this.userRepository = userRepository;
         this.imageService = imageService;
+        this.logService = logService;
     }
 
     @Value("${file.upload-dir-user}")
@@ -83,11 +90,15 @@ public class UserService {
 
     public User autenticar(String cpf, String senhaDigitada) {
 
-
         String cpfCript = CpfService.Criptografia(cpf);
 
-        User user = userRepository.findByCpf(cpfCript)
-                .orElseThrow(() -> new RegraException("CPF ou senha inválidos"));
+        User user = userRepository.findByCpf(cpfCript).orElse(null);
+
+        if (user == null) {
+            registrarTentativaLogin(null, false);
+            throw new RegraException("CPF ou senha inválidos");
+        }
+
         validarAtivo(user);
 
         boolean senhaValida = PasswordService.verificarSenha(
@@ -96,17 +107,22 @@ public class UserService {
         );
 
         if (!senhaValida) {
+            registrarTentativaLogin(user, false);
             throw new RegraException("CPF ou senha inválidos");
         }
+
+        registrarTentativaLogin(user, true);
 
         return user;
     }
 
+    @Auditar(acao = AcaoLog.ALTERACAO)
     @Transactional
     public UserResponseDto atualizar(Integer id, UserUpdateDto dto, MultipartFile foto, Integer userId) {
 
         User logado = buscarUserPorId(userId);
         User user = buscarUserPorId(id);
+        User antes = copiarUser(user);
 
         validarAtivo(user);
         validarPermissao(user, logado);
@@ -191,44 +207,81 @@ public class UserService {
 
         atualizarFoto(user, foto);
 
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(antes)
+                        .depois(user)
+                        .entidade("User")
+                        .entidadeId(user.getId())
+                        .build()
+        );
+
         return toResponseDto(userRepository.save(user));
     }
 
+    @Auditar(acao = AcaoLog.ALTERACAO)
     @Transactional
     public void desativar(Integer id, Integer userId) {
 
         User logado = buscarUserPorId(userId);
         User alvo = buscarUserPorId(id);
+        User antes = copiarUser(alvo);
 
         validarPermissao(alvo, logado);
 
         alvo.setAtivo(false);
-        userRepository.save(alvo);
+        User depois = userRepository.save(alvo);
+
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(antes)
+                        .depois(depois)
+                        .entidade("User")
+                        .entidadeId(id)
+                        .build()
+        );
     }
 
+    @Auditar(acao = AcaoLog.ALTERACAO)
     @Transactional
     public void reativar(Integer id) {
-        alterarStatus(id, true);
-    }
 
-    private void alterarStatus(Integer id, boolean ativo) {
         User user = buscarUserPorId(id);
+        User antes = copiarUser(user);
+        user.setAtivo(true);
 
-        user.setAtivo(ativo);
+        User depois = userRepository.save(user);
 
-        userRepository.save(user);
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(antes)
+                        .depois(depois)
+                        .entidade("User")
+                        .entidadeId(id)
+                        .build()
+        );
     }
 
     @Transactional
+    @Auditar(acao = AcaoLog.EXCLUSAO)
     public void deletar(Integer id) {
 
         User user = buscarUserPorId(id);
 
         imageService.deletarImagem(uploadDir, user.getFoto());
 
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(user)
+                        .entidade("User")
+                        .entidadeId(user.getId())
+                        .build()
+        );
+
         userRepository.deleteById(id);
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de users.")
     public List<UserResponseDto> listar() {
 
         return userRepository.findAll()
@@ -237,6 +290,7 @@ public class UserService {
                 .toList();
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de User por ID.")
     public UserResponseDto buscarPorId(Integer id, Integer userId) {
 
         User logado = buscarUserPorId(userId);
@@ -345,6 +399,41 @@ public class UserService {
                 throw new AccessDeniedException("Aluno só pode acessar sua própria conta");
             }
         }
+    }
+
+    private User copiarUser(User user) {
+
+        return User.builder()
+                .id(user.getId())
+                .cpf(user.getCpf())
+                .senha(user.getSenha())
+                .nome(user.getNome())
+                .email1(user.getEmail1())
+                .email2(user.getEmail2())
+                .tel1(user.getTel1())
+                .tel2(user.getTel2())
+                .sexo(user.getSexo())
+                .cep(user.getCep())
+                .bairro(user.getBairro())
+                .rua(user.getRua())
+                .numeroCasa(user.getNumeroCasa())
+                .comp(user.getComp())
+                .foto(user.getFoto())
+                .datanasc(user.getDatanasc())
+                .role(user.getRole())
+                .ativo(user.isAtivo())
+                .build();
+    }
+
+    private void registrarTentativaLogin(User user, boolean sucesso) {
+        logService.registrar(new LogDto(
+                user,
+                AcaoLog.LOGIN,
+                "User",
+                user != null ? user.getId() : null,
+                sucesso ? "Login realizado" : "Tentativa de login falhou",
+                sucesso
+        ));
     }
 
 }
