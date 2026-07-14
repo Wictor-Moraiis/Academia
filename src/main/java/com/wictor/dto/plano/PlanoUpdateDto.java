@@ -12,6 +12,8 @@ public record PlanoUpdateDto(
         BigDecimal valor,
 
         @Positive(message = "A Validade do plano deve ser positiva")
-        Integer validade
+        Integer validade,
+
+        Boolean ativo
 ) {}
 

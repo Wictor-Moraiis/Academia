@@ -27,5 +27,8 @@ public class Plano {
 
     @Column(name = "Plano_validade", nullable = false)
     private Integer validade;
+
+    @Column(name = "Plano_ativo", nullable = false)
+    private boolean ativo;
 }
 
