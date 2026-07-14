@@ -11,6 +11,8 @@ import com.wictor.repository.CategoriaRepository;
 import org.springframework.stereotype.Service;
 import com.wictor.audit.AuditoriaContext;
 import com.wictor.audit.AuditoriaInfo;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -23,6 +25,7 @@ public class CategoriaService {
     }
 
     @Auditar(acao = AcaoLog.CADASTRO)
+    @Transactional
     public CategoriaResponseDto cadastrar(CategoriaDto categoriaDTO) {
 
         Categoria categoria = categoriaRepository.save(
@@ -45,6 +48,7 @@ public class CategoriaService {
     }
 
     @Auditar(acao = AcaoLog.ALTERACAO)
+    @Transactional
     public CategoriaResponseDto atualizar(Integer id, CategoriaUpdateDto dto) {
         Categoria categoria = buscarCategoriaPorId(id);
         Categoria categoriaAntes = copiarCategoria(categoria);
@@ -105,6 +109,7 @@ public class CategoriaService {
     }
 
     @Auditar(acao = AcaoLog.EXCLUSAO)
+    @Transactional
     public void deletar(Integer id) {
 
         Categoria categoria = buscarCategoriaPorId(id);

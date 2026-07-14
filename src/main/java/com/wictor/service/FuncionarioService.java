@@ -9,11 +9,10 @@ import com.wictor.exception.*;
 import com.wictor.model.Categoria;
 import com.wictor.model.Funcionario;
 import com.wictor.model.User;
-import com.wictor.repository.AlunoRepository;
 import com.wictor.repository.CategoriaRepository;
 import com.wictor.repository.FuncionarioRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalTime;

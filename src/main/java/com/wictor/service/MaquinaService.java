@@ -10,7 +10,7 @@ import com.wictor.enums.AcaoLog;
 import com.wictor.exception.NotFoundException;
 import com.wictor.model.Maquina;
 import com.wictor.repository.MaquinaRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

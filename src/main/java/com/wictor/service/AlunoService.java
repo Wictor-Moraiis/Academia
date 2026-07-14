@@ -12,7 +12,7 @@ import com.wictor.model.Aluno;
 import com.wictor.model.Plano;
 import com.wictor.model.User;
 import com.wictor.repository.*;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 

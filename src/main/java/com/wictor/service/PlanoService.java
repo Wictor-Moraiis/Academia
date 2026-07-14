@@ -8,10 +8,9 @@ import com.wictor.dto.plano.PlanoResponseDto;
 import com.wictor.dto.plano.PlanoUpdateDto;
 import com.wictor.enums.AcaoLog;
 import com.wictor.exception.NotFoundException;
-import com.wictor.model.Maquina;
 import com.wictor.model.Plano;
 import com.wictor.repository.PlanoRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import java.util.List;
 

@@ -10,7 +10,7 @@ import com.wictor.repository.UserRepository;
 import com.wictor.util.AgeValidator;
 import com.wictor.util.CpfValidator;
 import com.wictor.util.NumberValidator;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -194,6 +194,7 @@ public class UserService {
         return toResponseDto(userRepository.save(user));
     }
 
+    @Transactional
     public void desativar(Integer id, Integer userId) {
 
         User logado = buscarUserPorId(userId);
@@ -205,6 +206,7 @@ public class UserService {
         userRepository.save(alvo);
     }
 
+    @Transactional
     public void reativar(Integer id) {
         alterarStatus(id, true);
     }

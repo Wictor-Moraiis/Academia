@@ -12,9 +12,9 @@ import com.wictor.model.Exercicio;
 import com.wictor.model.Maquina;
 import com.wictor.repository.ExercicioRepository;
 import com.wictor.repository.MaquinaRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;

@@ -8,7 +8,7 @@ import com.wictor.exception.NotFoundException;
 import com.wictor.exception.RegraException;
 import com.wictor.model.Produto;
 import com.wictor.repository.ProdutoRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;

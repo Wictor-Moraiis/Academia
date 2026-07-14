@@ -20,8 +20,8 @@ import com.wictor.repository.FinanceiroRepository;
 import com.wictor.repository.FuncionarioRepository;
 import com.wictor.repository.ProdutoRepository;
 import com.wictor.security.CustomUserDetails;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -43,6 +43,7 @@ public class FinanceiroService {
     }
 
     @Auditar(acao = AcaoLog.CADASTRO)
+    @Transactional
     public FinanceiroResponseDto cadastrar(FinanceiroDto financeiroDTO, CustomUserDetails user) {
 
         Funcionario funcionario = funcionarioRepository.findById(user.getId())
