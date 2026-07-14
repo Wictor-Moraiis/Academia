@@ -66,19 +66,11 @@ public class ProdutoService {
     @Auditar(acao = AcaoLog.ALTERACAO)
     @Transactional
     public ProdutoResponseDto atualizar(Integer id, ProdutoUpdateDto dto , MultipartFile foto) {
-        Produto produto = buscarProdutoPorId(id);
-        validarAtivo(produto);
 
-        Produto produtoAntes = Produto.builder()
-                .id(produto.getId())
-                .nome(produto.getNome())
-                .desc(produto.getDesc())
-                .preco(produto.getPreco())
-                .qtd(produto.getQtd())
-                .qtd_min(produto.getQtd_min())
-                .foto(produto.getFoto())
-                .ativo(produto.isAtivo())
-                .build();
+        Produto produto = buscarProdutoPorId(id);
+        Produto antes = copiarProduto(produto);
+
+        validarAtivo(produto);
 
         if (dto.nome() != null && !dto.nome().isBlank()) {
 
@@ -109,7 +101,7 @@ public class ProdutoService {
 
         AuditoriaContext.registrar(
                 AuditoriaInfo.builder()
-                        .antes(produtoAntes)
+                        .antes(antes)
                         .depois(produtoSalvo)
                         .entidade("Produto")
                         .entidadeId(produtoSalvo.getId())
@@ -124,9 +116,9 @@ public class ProdutoService {
     @Transactional
     public void desativar(Integer id) {
 
-        Produto antes = copiarProduto(buscarProdutoPorId(id));
-
         Produto produto = buscarProdutoPorId(id);
+        Produto antes = copiarProduto(produto);
+
         produto.setAtivo(false);
 
         Produto depois = produtoRepository.save(produto);
@@ -146,9 +138,9 @@ public class ProdutoService {
     @Transactional
     public void reativar(Integer id) {
 
-        Produto antes = copiarProduto(buscarProdutoPorId(id));
-
         Produto produto = buscarProdutoPorId(id);
+        Produto antes = copiarProduto(produto);
+
         produto.setAtivo(true);
 
         Produto depois = produtoRepository.save(produto);
