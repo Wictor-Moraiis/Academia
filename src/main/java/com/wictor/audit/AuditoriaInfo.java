@@ -3,6 +3,8 @@ package com.wictor.audit;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.io.Serializable;
+
 @Getter
 @Builder
 public class AuditoriaInfo {
@@ -15,6 +17,6 @@ public class AuditoriaInfo {
 
     private String entidade;
 
-    private Integer entidadeId;
+    private Serializable entidadeId;
 
 }

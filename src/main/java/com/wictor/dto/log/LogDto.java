@@ -3,6 +3,8 @@ package com.wictor.dto.log;
 import com.wictor.enums.AcaoLog;
 import com.wictor.model.User;
 
+import java.io.Serializable;
+
 public record LogDto(
 
         User usuario,
@@ -11,7 +13,7 @@ public record LogDto(
 
         String entidade,
 
-        Integer entidadeId,
+        Serializable entidadeId,
 
         String descricao,
 

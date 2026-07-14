@@ -3,7 +3,6 @@ package com.wictor.model;
 import com.wictor.enums.AcaoLog;
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -29,15 +28,15 @@ public class Log {
     private String entidade;
 
     @Column(name = "Log_entidade_id")
-    private Integer entidadeId;
+    private String entidadeId;
 
-    @Column(name = "Log_descricao", nullable = false, length = 1000)
+    @Column(name = "Log_descricao", nullable = false)
     private String descricao;
 
     @Column(name = "Log_sucesso", nullable = false)
     private Boolean sucesso;
 
-    @Column(name = "Log_metodo", nullable = false, length = 10)
+    @Column(name = "Log_metodo", nullable = false)
     private String metodo;
 
     @Column(name = "Log_url", nullable = false)

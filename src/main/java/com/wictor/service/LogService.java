@@ -25,7 +25,7 @@ public class LogService {
                 .usuario(dto.usuario())
                 .acao(dto.acao())
                 .entidade(dto.entidade())
-                .entidadeId(dto.entidadeId())
+                .entidadeId(dto.entidadeId() != null ? dto.entidadeId().toString() : null)
                 .descricao(dto.descricao())
                 .sucesso(dto.sucesso())
                 .metodo(request.getMethod())
