@@ -1,9 +1,11 @@
 package com.wictor.security;
+
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
 public class Settings {
+
     public static final String pepper = System.getenv("APP_PEPPER");
 
     public static SecretKeySpec getKey() throws Exception {
