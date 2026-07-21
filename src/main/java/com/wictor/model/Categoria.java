@@ -3,6 +3,7 @@ package com.wictor.model;
 import com.wictor.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
 
 @Entity
@@ -12,7 +13,6 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class Categoria {
 
     @Id

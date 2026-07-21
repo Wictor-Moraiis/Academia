@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.wictor.enums.TipoContrato;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalTime;
 
 @Entity

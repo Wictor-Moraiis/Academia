@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class Produto {
 
     @Id
@@ -40,5 +39,4 @@ public class Produto {
 
     @Column(name = "Prod_ativo", nullable = false)
     private boolean ativo;
-
 }

@@ -22,6 +22,5 @@ public class Maquina {
 
     @Column(name = "Maq_ativa", nullable = false)
     private boolean ativa;
-
 }
 
