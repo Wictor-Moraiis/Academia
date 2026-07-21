@@ -17,9 +17,7 @@ public class AdminInitializer {
     public CommandLineRunner initAdmin(UserRepository repository) {
         return args -> {
 
-            if (repository.count() > 0) {
-                return;
-            }
+            if (repository.count() > 0) {return;}
 
             User admin = User.builder()
                     .nome("Admin")
