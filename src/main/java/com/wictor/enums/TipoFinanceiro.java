@@ -21,7 +21,5 @@ public enum TipoFinanceiro {
         this.entrada = entrada;
     }
 
-    public boolean isSaida() {
-        return !entrada;
-    }
+    public boolean isSaida(){return !entrada;}
 }

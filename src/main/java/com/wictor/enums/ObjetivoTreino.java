@@ -1,6 +1,7 @@
 package com.wictor.enums;
 
 public enum ObjetivoTreino {
+
     FORCA,
     HIPERTROFIA,
     RESISTENCIA,
