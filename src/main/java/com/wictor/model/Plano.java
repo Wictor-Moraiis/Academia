@@ -1,7 +1,9 @@
 package com.wictor.model;
 
+import com.wictor.enums.CicloPlano;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
 
 @Entity
@@ -11,7 +13,6 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class Plano {
 
     @Id
@@ -25,8 +26,15 @@ public class Plano {
     @Column(name = "Plano_valor", nullable = false)
     private BigDecimal valor;
 
-    @Column(name = "Plano_validade", nullable = false)
-    private Integer validade;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "Plano_ciclo", nullable = false)
+    private CicloPlano ciclo;
+
+    @Column(name = "Plano_abacate_id")
+    private String abacateProductId;
+
+    @Column(name = "Plano_recorrente", nullable = false)
+    private boolean recorrente;
 
     @Column(name = "Plano_ativo", nullable = false)
     private boolean ativo;

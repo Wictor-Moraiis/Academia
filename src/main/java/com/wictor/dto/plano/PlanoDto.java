@@ -1,5 +1,6 @@
 package com.wictor.dto.plano;
 
+import com.wictor.enums.CicloPlano;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -14,7 +15,9 @@ public record PlanoDto(
         @Positive(message = "Valor do plano deve ser positivo")
         BigDecimal valor,
 
-        @NotNull(message = "Validade do plano é obrigatória")
-        @Positive(message = "A Validade do plano deve ser positiva")
-        Integer validade
-) {}
+        @NotNull(message = "Ciclo do plano é obrigatório")
+        CicloPlano ciclo,
+
+        @NotNull(message = "Recorrencia do plano é obrigatória")
+        Boolean recorrente
+){}

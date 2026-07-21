@@ -1,5 +1,6 @@
 package com.wictor.dto.plano;
 
+import com.wictor.enums.CicloPlano;
 import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
@@ -11,9 +12,10 @@ public record PlanoUpdateDto(
         @Positive(message = "Valor do plano deve ser positivo")
         BigDecimal valor,
 
-        @Positive(message = "A Validade do plano deve ser positiva")
-        Integer validade,
+        CicloPlano ciclo,
+
+        Boolean recorrente,
 
         Boolean ativo
-) {}
+){}
 
