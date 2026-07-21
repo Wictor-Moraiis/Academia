@@ -44,17 +44,10 @@ public class CpfValidator {
         digito1 = (soma1 * 10) % 11;
         digito2 = (soma2 * 10) % 11;
 
-        if (digito1 == 10) {
-            digito1 = 0;
-        }
+        if (digito1 == 10) {digito1 = 0;}
 
-        if (digito2 == 10) {
-            digito2 = 0;
-        }
+        if (digito2 == 10) {digito2 = 0;}
 
         return digito1 == digitos[9] && digito2 == digitos[10];
-
-
     }
-
 }
