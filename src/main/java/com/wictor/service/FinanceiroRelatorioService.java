@@ -1,5 +1,6 @@
 package com.wictor.service;
 
+import com.wictor.enums.TipoFinanceiro;
 import com.wictor.model.Financeiro;
 import com.wictor.repository.FinanceiroRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,9 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
 import java.text.DecimalFormat;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.jfree.chart.plot.PiePlot;
 import org.jfree.data.category.DefaultCategoryDataset;
 
@@ -42,6 +46,11 @@ public class FinanceiroRelatorioService {
 
     public byte[] gerarRelatorio(LocalDate inicio, LocalDate fim) {
 
+        if (inicio.isAfter(fim)) {
+
+            throw new IllegalArgumentException("A data inicial não pode ser maior que a data final.");
+        }
+
         List<Financeiro> movimentacoes = buscarMovimentacoes(inicio, fim);
 
         BigDecimal entradas = calcularEntradas(movimentacoes);
@@ -50,27 +59,42 @@ public class FinanceiroRelatorioService {
         return montarPdf(movimentacoes, inicio, fim, entradas, saidas);
     }
 
-    private Image gerarGraficoPizza(
-            BigDecimal entradas,
-            BigDecimal saidas
-    ) {
+    private Image gerarGraficoPizza(BigDecimal entradas, BigDecimal saidas) {
         try {
 
-            DefaultPieDataset dataset = new DefaultPieDataset();
+            DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
 
             dataset.setValue("Receitas", entradas.doubleValue());
             dataset.setValue("Despesas", saidas.doubleValue());
 
-            JFreeChart grafico = ChartFactory.createPieChart("Resumo Financeiro", dataset, true, true, false);
+            JFreeChart grafico = ChartFactory.createPieChart(
+                    "Resumo Financeiro",
+                    dataset,
+                    true,
+                    true,
+                    false
+            );
 
             grafico.getTitle().setFont(new java.awt.Font("Helvetica", java.awt.Font.BOLD, 18));
 
-            PiePlot plot = (PiePlot) grafico.getPlot();
+            if (!(grafico.getPlot() instanceof PiePlot<?>)) {
+                throw new IllegalStateException("Gráfico gerado não é um PiePlot");
+            }
+
+            @SuppressWarnings("unchecked")
+            PiePlot<String> plot = (PiePlot<String>) grafico.getPlot();
+
             plot.setSectionPaint("Receitas", new java.awt.Color(46, 125, 50));
+
             plot.setSectionPaint("Despesas", new java.awt.Color(198, 40, 40));
 
-            plot.setLabelGenerator(new StandardPieSectionLabelGenerator("{0}: {2}",
-                    new DecimalFormat("0"), new DecimalFormat("0.0%")));
+            plot.setLabelGenerator(
+                    new StandardPieSectionLabelGenerator(
+                            "{0}: {2}",
+                            new DecimalFormat("0"),
+                            new DecimalFormat("0.0%")
+                    )
+            );
 
             plot.setLabelFont(new java.awt.Font("Helvetica", java.awt.Font.PLAIN, 12));
 
@@ -85,6 +109,7 @@ public class FinanceiroRelatorioService {
             return Image.getInstance(baos.toByteArray());
 
         } catch (Exception e) {
+
             throw new RuntimeException("Erro ao gerar gráfico financeiro", e);
         }
     }
@@ -95,25 +120,34 @@ public class FinanceiroRelatorioService {
 
             DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
-            for (Financeiro financeiro : movimentacoes) {
+            Map<TipoFinanceiro, BigDecimal> totais =
+                    movimentacoes.stream().collect(Collectors.groupingBy(Financeiro::getTipo,
+                                    Collectors.mapping(Financeiro::getValor,
+                                            Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
 
-                String tipo = financeiro.getTipo().getDescricao();
+            totais.forEach((tipo, valor) -> {
 
-                String serie = financeiro.getTipo().isEntrada() ? "Receitas" : "Despesas";
+                String serie = tipo.isEntrada() ? "Receitas" : "Despesas";
 
-                dataset.addValue(financeiro.getValor().doubleValue(), serie, tipo);
-            }
+                dataset.addValue(valor.doubleValue(), serie, tipo.getDescricao());
+            });
 
-            JFreeChart grafico = ChartFactory.createBarChart("Movimentações por Tipo", "Tipo", "Valor (R$)", dataset);
+            JFreeChart grafico = ChartFactory.createBarChart(
+                    "Movimentações por Tipo",
+                    "Tipo",
+                    "Valor (R$)",
+                    dataset
+            );
 
             grafico.getTitle().setFont(new java.awt.Font("Helvetica", java.awt.Font.BOLD, 18));
 
             BarRenderer renderer = (BarRenderer) grafico.getCategoryPlot().getRenderer();
 
             renderer.setSeriesPaint(0, new java.awt.Color(46,125,50));
+
             renderer.setSeriesPaint(1, new java.awt.Color(198,40,40));
 
-            BufferedImage imagem = grafico.createBufferedImage(600,350);
+            BufferedImage imagem = grafico.createBufferedImage(600, 350);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -122,6 +156,7 @@ public class FinanceiroRelatorioService {
             return Image.getInstance(baos.toByteArray());
 
         } catch (Exception e) {
+
             throw new RuntimeException("Erro ao gerar gráfico de barras", e);
         }
     }
@@ -146,17 +181,98 @@ public class FinanceiroRelatorioService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private BigDecimal calcularSaldo(BigDecimal entradas, BigDecimal saidas) {
-        return entradas.subtract(saidas);
+    private BigDecimal calcularSaldo(BigDecimal entradas, BigDecimal saidas) {return entradas.subtract(saidas);}
+
+    private String obterOrigem(Financeiro financeiro) {
+        return financeiro.getOrigem() != null
+                ? financeiro.getOrigem().name()
+                : "-";
     }
 
-    private byte[] montarPdf(
-            List<Financeiro> movimentacoes,
-            LocalDate inicio,
-            LocalDate fim,
-            BigDecimal entradas,
-            BigDecimal saidas
-    ) {
+    private static final Font TITULO = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
+
+    private static final Font SUBTITULO = FontFactory.getFont(FontFactory.HELVETICA, 12);
+
+    private static final Font CABECALHO = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
+
+    private static final Font TEXTO = FontFactory.getFont(FontFactory.HELVETICA, 10);
+
+    private static final Font RESUMO = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
+
+    private void adicionarCabecalho(PdfPTable tabela, String titulo) {
+
+        PdfPCell cell = new PdfPCell(new Phrase(titulo, CABECALHO));
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setPadding(5);
+
+        tabela.addCell(cell);
+    }
+
+    private void adicionarLinha(PdfPTable tabela, Financeiro financeiro) {
+
+        tabela.addCell(new Phrase(financeiro.getData().format(DATA_FORMATTER), TEXTO));
+
+        tabela.addCell(new Phrase(financeiro.getTipo().getDescricao(), TEXTO));
+
+        tabela.addCell(new Phrase(obterOrigem(financeiro), TEXTO));
+
+        tabela.addCell(new Phrase(financeiro.getNome(), TEXTO));
+
+        tabela.addCell(new Phrase(obterResponsavel(financeiro), TEXTO));
+
+        tabela.addCell(new Phrase(obterFormaPagamento(financeiro), TEXTO));
+
+        tabela.addCell(new Phrase(MOEDA.format(financeiro.getValor()), TEXTO));
+    }
+
+    private void adicionarResumo(Document document, List<Financeiro> movimentacoes, BigDecimal entradas,
+                                 BigDecimal saidas, BigDecimal saldo) throws DocumentException {
+
+        document.add(new Paragraph("Movimentações: " + movimentacoes.size(), RESUMO));
+
+        document.add(new Paragraph("Entradas: " + MOEDA.format(entradas), RESUMO));
+
+        document.add(new Paragraph("Saídas: " + MOEDA.format(saidas), RESUMO));
+
+        document.add(new Paragraph("Saldo: " + MOEDA.format(saldo), RESUMO));
+    }
+
+    private String obterResponsavel(Financeiro financeiro) {
+
+        if (financeiro.getFuncionario() == null) {return "Sistema";}
+
+        return financeiro.getFuncionario().getUser().getNome();
+    }
+
+    private void adicionarGraficos(Document document, List<Financeiro> movimentacoes, BigDecimal entradas,
+                                   BigDecimal saidas) throws DocumentException {
+
+        Image pizza = gerarGraficoPizza(entradas, saidas);
+        pizza.scaleToFit(400, 250);
+        pizza.setAlignment(Element.ALIGN_CENTER);
+        document.add(pizza);
+
+        Image barras = gerarGraficoBarras(movimentacoes);
+        barras.scaleToFit(500, 300);
+        barras.setAlignment(Element.ALIGN_CENTER);
+        document.add(barras);
+    }
+
+    private String obterFormaPagamento(Financeiro financeiro) {
+
+        if (financeiro.getPagamento() == null ||
+                financeiro.getPagamento().getFormaPagamento() == null) {
+            return "-";
+        }
+
+        return financeiro.getPagamento()
+                .getFormaPagamento()
+                .name();
+    }
+
+    private byte[] montarPdf(List<Financeiro> movimentacoes, LocalDate inicio, LocalDate fim,
+                             BigDecimal entradas, BigDecimal saidas) {
 
         BigDecimal saldo = calcularSaldo(entradas, saidas);
 
@@ -167,13 +283,7 @@ public class FinanceiroRelatorioService {
 
             document.open();
 
-            Font titulo = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-            Font subtitulo = FontFactory.getFont(FontFactory.HELVETICA, 12);
-            Font cabecalhoTabela = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
-            Font texto = FontFactory.getFont(FontFactory.HELVETICA, 10);
-            Font resumo = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
-
-            Paragraph tituloPdf = new Paragraph("RELATÓRIO FINANCEIRO", titulo);
+            Paragraph tituloPdf = new Paragraph("RELATÓRIO FINANCEIRO", TITULO);
             tituloPdf.setAlignment(Element.ALIGN_CENTER);
             document.add(tituloPdf);
 
@@ -184,99 +294,54 @@ public class FinanceiroRelatorioService {
                             + inicio.format(DATA_FORMATTER)
                             + " até "
                             + fim.format(DATA_FORMATTER),
-                    subtitulo));
+                    SUBTITULO));
 
             document.add(new Paragraph(
                     "Emitido em: "
                             + LocalDate.now().format(DATA_FORMATTER),
-                    subtitulo));
+                    SUBTITULO));
 
             document.add(Chunk.NEWLINE);
 
-            PdfPTable tabela = new PdfPTable(5);
+            PdfPTable tabela = new PdfPTable(7);
             tabela.setWidthPercentage(100);
-            tabela.setWidths(new float[]{2, 3, 5, 3, 2});
+            tabela.setWidths(new float[]{2f, 2f, 3f, 4f, 3f, 2f, 2f});
 
-            PdfPCell cell;
+            adicionarCabecalho(tabela, "Data");
+            adicionarCabecalho(tabela, "Tipo");
+            adicionarCabecalho(tabela, "Origem");
+            adicionarCabecalho(tabela, "Descrição");
+            adicionarCabecalho(tabela, "Responsável");
+            adicionarCabecalho(tabela, "Forma");
+            adicionarCabecalho(tabela, "Valor");
 
-            cell = new PdfPCell(new Phrase("Data", cabecalhoTabela));
-            tabela.addCell(cell);
-
-            cell = new PdfPCell(new Phrase("Tipo", cabecalhoTabela));
-            tabela.addCell(cell);
-
-            cell = new PdfPCell(new Phrase("Descrição", cabecalhoTabela));
-            tabela.addCell(cell);
-
-            cell = new PdfPCell(new Phrase("Responsável", cabecalhoTabela));
-            tabela.addCell(cell);
-
-            cell = new PdfPCell(new Phrase("Valor", cabecalhoTabela));
-            tabela.addCell(cell);
-
-            for (Financeiro financeiro : movimentacoes) {
-
-                tabela.addCell(new Phrase(
-                        financeiro.getData().format(DATA_FORMATTER),
-                        texto));
-
-                tabela.addCell(new Phrase(
-                        financeiro.getTipo().getDescricao(),
-                        texto));
-
-                tabela.addCell(new Phrase(
-                        financeiro.getNome(),
-                        texto));
-
-                tabela.addCell(new Phrase(
-                        financeiro.getFuncionario().getUser().getNome(),
-                        texto));
-
-                tabela.addCell(new Phrase(
-                        MOEDA.format(financeiro.getValor()),
-                        texto));
-            }
+            movimentacoes.forEach(financeiro -> adicionarLinha(tabela, financeiro));
 
             document.add(tabela);
 
             document.add(Chunk.NEWLINE);
 
-            document.add(new Paragraph(
-                    "Total de entradas: " + MOEDA.format(entradas),
-                    resumo));
-
-            document.add(new Paragraph(
-                    "Total de saídas: " + MOEDA.format(saidas),
-                    resumo));
-
-            document.add(new Paragraph(
-                    "Saldo: " + MOEDA.format(saldo),
-                    resumo));
+            adicionarResumo(document, movimentacoes, entradas, saidas, saldo);
 
             document.add(Chunk.NEWLINE);
             document.add(Chunk.NEWLINE);
 
-            Image pizza = gerarGraficoPizza(entradas, saidas);
+            adicionarGraficos(document, movimentacoes, entradas, saidas);
 
-            pizza.scaleToFit(400, 250);
-            pizza.setAlignment(Element.ALIGN_CENTER);
-            document.add(pizza);
+            Paragraph rodape = new Paragraph("Relatório gerado automaticamente", TEXTO);
 
-            Image barras = gerarGraficoBarras(movimentacoes);
+            rodape.setAlignment(Element.ALIGN_CENTER);
 
-            barras.scaleToFit(500,300);
-            barras.setAlignment(Element.ALIGN_CENTER);
-
-            document.add(barras);
+            document.add(Chunk.NEWLINE);
+            document.add(rodape);
 
             document.close();
 
             return baos.toByteArray();
 
         } catch (Exception e) {
+
             throw new RuntimeException("Erro ao gerar relatório financeiro.", e);
         }
     }
-
-
 }

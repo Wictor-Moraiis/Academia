@@ -79,21 +79,13 @@ public class ProdutoService {
             produto.setNome(dto.nome());
         }
 
-        if (dto.desc() != null && !dto.desc().isBlank()) {
-            produto.setDesc(dto.desc());
-        }
+        if (dto.desc() != null && !dto.desc().isBlank()) {produto.setDesc(dto.desc());}
 
-        if (dto.preco() != null) {
-            produto.setPreco(dto.preco());
-        }
+        if (dto.preco() != null) {produto.setPreco(dto.preco());}
 
-        if (dto.qtd() != null) {
-            produto.setQtd(dto.qtd());
-        }
+        if (dto.qtd() != null) {produto.setQtd(dto.qtd());}
 
-        if (dto.qtd_min() != null) {
-            produto.setQtd_min(dto.qtd_min());
-        }
+        if (dto.qtd_min() != null) {produto.setQtd_min(dto.qtd_min());}
 
         atualizarFoto(produto, foto);
 
@@ -109,7 +101,6 @@ public class ProdutoService {
         );
 
         return toResponseDto(produtoSalvo);
-
     }
 
     @Auditar(acao = AcaoLog.ALTERACAO)
@@ -156,6 +147,25 @@ public class ProdutoService {
         );
     }
 
+    @Auditar(acao = AcaoLog.EXCLUSAO)
+    @Transactional
+    public void deletar(Integer id) {
+
+        Produto produto = buscarProdutoPorId(id);
+
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(produto)
+                        .entidade("Produto")
+                        .entidadeId(produto.getId())
+                        .build()
+        );
+
+        imageService.deletarImagem(uploadDir, produto.getFoto());
+
+        produtoRepository.delete(produto);
+    }
+
     @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de produtos.")
     public List<ProdutoResponseDto> listar() {
         return produtoRepository.findAll()
@@ -180,29 +190,20 @@ public class ProdutoService {
     @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de produto por ID.")
     public ProdutoResponseDto buscarPorId(Integer id) {return toResponseDto(buscarProdutoPorId(id));}
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de produtos para reposição.")
+    public List<ProdutoResponseDto> buscarProdutosReposicao() {
+
+        return produtoRepository.buscarProdutosReposicao()
+                .stream()
+                .map(this::toResponseDto)
+                .toList();
+    }
+
     private Produto buscarProdutoPorId(Integer id) {
-        return produtoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Produto não encontrado"));
+
+        return produtoRepository.findById(id).orElseThrow(() -> new NotFoundException("Produto não encontrado"));
     }
 
-    @Auditar(acao = AcaoLog.EXCLUSAO)
-    @Transactional
-    public void deletar(Integer id) {
-
-        Produto produto = buscarProdutoPorId(id);
-
-        AuditoriaContext.registrar(
-                AuditoriaInfo.builder()
-                        .antes(produto)
-                        .entidade("Produto")
-                        .entidadeId(produto.getId())
-                        .build()
-        );
-
-        imageService.deletarImagem(uploadDir, produto.getFoto());
-
-        produtoRepository.delete(produto);
-    }
 
     private void atualizarFoto(Produto produto, MultipartFile foto) {
 

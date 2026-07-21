@@ -25,8 +25,7 @@ public class ProdutoController {
 
     @PreAuthorize("hasAnyRole('ADMIN','GERENTE')")
     @PostMapping(consumes = "multipart/form-data")
-    public ResponseEntity<ProdutoResponseDto> cadastrar(
-            @RequestPart("dados") @Valid ProdutoDto dto,
+    public ResponseEntity<ProdutoResponseDto> cadastrar(@RequestPart("dados") @Valid ProdutoDto dto,
             @RequestPart(value = "foto", required = false) MultipartFile foto) {
 
         return ResponseEntity.status(201).body(produtoService.cadastrar(dto, foto));
@@ -42,37 +41,47 @@ public class ProdutoController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','GERENTE')")
-    @PatchMapping("/desativar/{id}")
-    public ResponseEntity<Map<String, String>> desativar(@PathVariable Integer id) {
+    @PatchMapping("/desativar/{produtoId}")
+    public ResponseEntity<Map<String, String>> desativar(@PathVariable Integer produtoId) {
 
-        produtoService.desativar(id);
+        produtoService.desativar(produtoId);
         return ResponseEntity.ok(Map.of("mensagem", "Produto desativado"));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','GERENTE')")
-    @PatchMapping("/reativar/{id}")
-    public ResponseEntity<Map<String, String>> reativar(@PathVariable Integer id) {
-        produtoService.reativar(id);
+    @PatchMapping("/reativar/{produtoId}")
+    public ResponseEntity<Map<String, String>> reativar(@PathVariable Integer produtoId) {
+
+        produtoService.reativar(produtoId);
         return ResponseEntity.ok(Map.of("mensagem", "Produto reativado"));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
+    @DeleteMapping("/{produtoId}")
+    public ResponseEntity<Void> deletar(@PathVariable Integer produtoId) {
 
-        produtoService.deletar(id);
+        produtoService.deletar(produtoId);
         return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA')")
     @GetMapping
     public ResponseEntity<List<ProdutoResponseDto>> listar() {
+
         return ResponseEntity.ok(produtoService.listar());
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA')")
-    @GetMapping("/{id}")
-    public ResponseEntity<ProdutoResponseDto> buscarPorId(@PathVariable Integer id) {
-        return ResponseEntity.ok(produtoService.buscarPorId(id));
+    @GetMapping("/{produtoId}")
+    public ResponseEntity<ProdutoResponseDto> buscarPorId(@PathVariable Integer produtoId) {
+
+        return ResponseEntity.ok(produtoService.buscarPorId(produtoId));
+    }
+
+    @GetMapping("/reposicao")
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA')")
+    public ResponseEntity<List<ProdutoResponseDto>> buscarProdutosReposicao() {
+
+        return ResponseEntity.ok(produtoService.buscarProdutosReposicao());
     }
 }
