@@ -12,5 +12,4 @@ public @interface Auditar {
     AcaoLog acao();
 
     String descricao() default "";
-
 }

@@ -18,5 +18,4 @@ public class AuditoriaInfo {
     private String entidade;
 
     private Serializable entidadeId;
-
 }

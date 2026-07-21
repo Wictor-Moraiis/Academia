@@ -4,7 +4,7 @@ public class AuditoriaContext {
 
     private static final ThreadLocal<AuditoriaInfo> CONTEXT = new ThreadLocal<>();
 
-    private AuditoriaContext() {}
+    private AuditoriaContext(){}
 
     public static void registrar(AuditoriaInfo info) {
         CONTEXT.set(info);
@@ -17,5 +17,4 @@ public class AuditoriaContext {
     public static void limpar() {
         CONTEXT.remove();
     }
-
 }
