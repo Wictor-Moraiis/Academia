@@ -5,7 +5,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 
 import java.math.BigDecimal;
 
-public record ItemFinanceiroDto (
+public record ItemFinanceiroDto(
 
         @NotNull(message = "Id do produto é obrigatório")
         Integer produtoId,
@@ -16,4 +16,4 @@ public record ItemFinanceiroDto (
         @NotNull(message = "Desconto não pode ser nulo")
         @PositiveOrZero(message = "Desconto não pode ser negativo")
         BigDecimal desconto
-){ }
+){}

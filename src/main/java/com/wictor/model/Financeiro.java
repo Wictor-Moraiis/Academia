@@ -1,5 +1,6 @@
 package com.wictor.model;
 
+import com.wictor.enums.OrigemFinanceiro;
 import com.wictor.enums.TipoFinanceiro;
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,7 +16,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class Financeiro {
 
     @Id
@@ -36,9 +36,17 @@ public class Financeiro {
     @Column(name = "Fin_val", nullable = false)
     private BigDecimal valor;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "Fin_origem", nullable = false)
+    private OrigemFinanceiro origem;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "Func_id", nullable = false)
+    @JoinColumn(name = "Func_id")
     private Funcionario funcionario;
+
+    @OneToOne
+    @JoinColumn(name = "Pag_id")
+    private Pagamento pagamento;
 
     @OneToMany(mappedBy = "financeiro", cascade = CascadeType.ALL)
     private List<ItemFinanceiro> itens;

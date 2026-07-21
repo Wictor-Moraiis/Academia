@@ -11,6 +11,7 @@ import com.wictor.dto.itemfinanceiro.ItemFinanceiroResponseDto;
 import com.wictor.dto.venda.VendaDto;
 import com.wictor.dto.venda.VendaResponseDto;
 import com.wictor.enums.AcaoLog;
+import com.wictor.enums.OrigemFinanceiro;
 import com.wictor.enums.Role;
 import com.wictor.enums.TipoFinanceiro;
 import com.wictor.exception.NotFoundException;
@@ -44,30 +45,21 @@ public class FinanceiroService {
 
     @Auditar(acao = AcaoLog.CADASTRO)
     @Transactional
-    public FinanceiroResponseDto cadastrar(FinanceiroDto financeiroDTO, CustomUserDetails user) {
+    public FinanceiroResponseDto cadastrar(FinanceiroDto dto, CustomUserDetails user) {
 
         Funcionario funcionario = funcionarioRepository.findById(user.getId())
                 .orElseThrow(() -> new NotFoundException("Funcionário não encontrado"));
 
-        Financeiro financeiro = financeiroRepository.save(
-                Financeiro.builder()
-                        .nome(financeiroDTO.nome())
-                        .tipo(financeiroDTO.tipo())
-                        .data(financeiroDTO.data())
-                        .valor(financeiroDTO.valor())
-                        .funcionario(funcionario)
-                        .build()
-        );
+        Financeiro financeiro = Financeiro.builder()
+                .nome(dto.nome())
+                .tipo(dto.tipo())
+                .origem(OrigemFinanceiro.LANCAMENTO_MANUAL)
+                .data(dto.data())
+                .valor(dto.valor())
+                .funcionario(funcionario)
+                .build();
 
-        AuditoriaContext.registrar(
-                AuditoriaInfo.builder()
-                        .depois(financeiro)
-                        .entidade("Financeiro")
-                        .entidadeId(financeiro.getId())
-                        .build()
-        );
-
-        return toResponseDto(financeiro);
+        return toResponseDto(registrarLancamento(financeiro, "Lançamento manual."));
     }
 
     @Auditar(acao = AcaoLog.CADASTRO)
@@ -80,6 +72,7 @@ public class FinanceiroService {
         Financeiro financeiro = Financeiro.builder()
                 .nome("Venda de Produtos")
                 .tipo(TipoFinanceiro.VENDA)
+                .origem(OrigemFinanceiro.VENDA_PRODUTO)
                 .data(LocalDate.now())
                 .funcionario(funcionario)
                 .build();
@@ -95,18 +88,15 @@ public class FinanceiroService {
                     .orElseThrow(() -> new NotFoundException("Produto não encontrado"));
 
             if (produto.getQtd() < itemDto.qtd()) {
+
                 throw new RegraException("Estoque insuficiente: " + produto.getNome());
             }
 
             BigDecimal valorUnitario = produto.getPreco();
 
-            BigDecimal desconto = itemDto.desconto() != null
-                    ? itemDto.desconto()
-                    : BigDecimal.ZERO;
+            BigDecimal desconto = itemDto.desconto() != null ? itemDto.desconto() : BigDecimal.ZERO;
 
-            BigDecimal subtotal = valorUnitario
-                    .multiply(BigDecimal.valueOf(itemDto.qtd()))
-                    .subtract(desconto);
+            BigDecimal subtotal = valorUnitario.multiply(BigDecimal.valueOf(itemDto.qtd())).subtract(desconto);
 
             total = total.add(subtotal);
 
@@ -154,6 +144,24 @@ public class FinanceiroService {
         );
     }
 
+    @Auditar(acao = AcaoLog.CADASTRO)
+    @Transactional
+    public Financeiro registrarLancamento(Financeiro financeiro, String descricaoAuditoria) {
+
+        Financeiro salvo = financeiroRepository.save(financeiro);
+
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .depois(salvo)
+                        .entidade("Financeiro")
+                        .entidadeId(salvo.getId())
+                        .descricao(descricaoAuditoria)
+                        .build()
+        );
+
+        return salvo;
+    }
+
     @Auditar(acao = AcaoLog.ALTERACAO)
     @Transactional
     public FinanceiroResponseDto atualizar(Integer id, FinanceiroUpdateDto dto) {
@@ -161,25 +169,15 @@ public class FinanceiroService {
         Financeiro financeiro = buscarFinanceiroPorId(id);
         Financeiro financeiroAntes = copiarFinanceiro(financeiro);
 
-        if (financeiro.getTipo() == TipoFinanceiro.VENDA) {
-            throw new RegraException("Vendas não podem ser alteradas");
-        }
+        if (financeiro.getTipo() == TipoFinanceiro.VENDA) {throw new RegraException("Vendas não podem ser alteradas");}
 
-        if (dto.nome() != null && !dto.nome().isBlank()) {
-            financeiro.setNome(dto.nome());
-        }
+        if (dto.nome() != null && !dto.nome().isBlank()) {financeiro.setNome(dto.nome());}
 
-        if (dto.tipo() != null) {
-            financeiro.setTipo(dto.tipo());
-        }
+        if (dto.tipo() != null) {financeiro.setTipo(dto.tipo());}
 
-        if (dto.data() != null) {
-            financeiro.setData(dto.data());
-        }
+        if (dto.data() != null) {financeiro.setData(dto.data());}
 
-        if (dto.valor() != null) {
-            financeiro.setValor(dto.valor());
-        }
+        if (dto.valor() != null) {financeiro.setValor(dto.valor());}
 
         Financeiro financeiroSalvo = financeiroRepository.save(financeiro);
 
@@ -193,6 +191,23 @@ public class FinanceiroService {
         );
 
         return toResponseDto(financeiro);
+    }
+
+    @Auditar(acao = AcaoLog.EXCLUSAO)
+    @Transactional
+    public void deletar(Integer id) {
+
+        Financeiro financeiro = buscarFinanceiroPorId(id);
+
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(financeiro)
+                        .entidade("Financeiro")
+                        .entidadeId(financeiro.getId())
+                        .build()
+        );
+
+        financeiroRepository.delete(financeiro);
     }
 
     @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de atividades financeiras.")
@@ -222,30 +237,15 @@ public class FinanceiroService {
                 .orElseThrow(() -> new NotFoundException("Atividade financeira não encontrada"));
     }
 
-    @Auditar(acao = AcaoLog.EXCLUSAO)
-    @Transactional
-    public void deletar(Integer id) {
-
-        Financeiro financeiro = buscarFinanceiroPorId(id);
-
-        AuditoriaContext.registrar(
-                AuditoriaInfo.builder()
-                        .antes(financeiro)
-                        .entidade("Financeiro")
-                        .entidadeId(financeiro.getId())
-                        .build()
-        );
-
-        financeiroRepository.delete(financeiro);
-    }
-
     private FinanceiroResponseDto toResponseDto(Financeiro financeiro) {
         return new FinanceiroResponseDto(
                 financeiro.getId(),
                 financeiro.getNome(),
                 financeiro.getTipo(),
+                financeiro.getOrigem(),
                 financeiro.getData(),
-                financeiro.getValor()
+                financeiro.getValor(),
+                financeiro.getFuncionario() != null ? financeiro.getFuncionario().getUser().getNome() : null
         );
     }
 
