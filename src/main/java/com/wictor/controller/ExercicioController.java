@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 @RestController
@@ -23,39 +24,40 @@ public class ExercicioController {
 
     @PreAuthorize("hasAnyRole('ADMIN','GERENTE','PROFESSOR')")
     @PostMapping(consumes = "multipart/form-data")
-    public ResponseEntity<ExercicioResponseDto> cadastrar(
-            @RequestPart("dados") @Valid ExercicioDto dto,
+    public ResponseEntity<ExercicioResponseDto> cadastrar(@RequestPart("dados") @Valid ExercicioDto dto,
             @RequestPart(value = "foto", required = false) MultipartFile foto) {
 
         return ResponseEntity.status(201).body(exercicioService.cadastrar(dto,foto));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','GERENTE','PROFESSOR')")
-    @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
-    public ResponseEntity<ExercicioResponseDto> atualizar(@PathVariable Integer id,
+    @PatchMapping(value = "/{exercicioId}", consumes = "multipart/form-data")
+    public ResponseEntity<ExercicioResponseDto> atualizar(@PathVariable Integer exercicioId,
                                      @RequestPart("dados") @Valid ExercicioUpdateDto dto,
                                      @RequestPart(value = "foto", required = false) MultipartFile foto) {
 
-        return ResponseEntity.ok(exercicioService.atualizar(id, dto, foto));
+        return ResponseEntity.ok(exercicioService.atualizar(exercicioId, dto, foto));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
+    @DeleteMapping("/{exercicioId}")
+    public ResponseEntity<Void> deletar(@PathVariable Integer exercicioId) {
 
-        exercicioService.deletar(id);
+        exercicioService.deletar(exercicioId);
         return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA','PROFESSOR','ALUNO')")
     @GetMapping
     public ResponseEntity<List<ExercicioResponseDto>> listar() {
+
         return ResponseEntity.ok(exercicioService.listar());
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA','PROFESSOR','ALUNO')")
-    @GetMapping("/{id}")
-    public ResponseEntity<ExercicioResponseDto> buscarPorId(@PathVariable Integer id) {
-        return ResponseEntity.ok(exercicioService.buscarPorId(id));
+    @GetMapping("/{exercicioId}")
+    public ResponseEntity<ExercicioResponseDto> buscarPorId(@PathVariable Integer exercicioId) {
+
+        return ResponseEntity.ok(exercicioService.buscarPorId(exercicioId));
     }
 }

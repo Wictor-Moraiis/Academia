@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -22,40 +23,39 @@ public class CategoriaController {
 
     @PreAuthorize("hasAnyRole('ADMIN','GERENTE')")
     @PostMapping
-    public ResponseEntity<CategoriaResponseDto> cadastrar(
-            @RequestBody @Valid CategoriaDto dto) {
+    public ResponseEntity<CategoriaResponseDto> cadastrar(@RequestBody @Valid CategoriaDto dto) {
 
         return ResponseEntity.status(201).body(categoriaService.cadastrar(dto));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','GERENTE')")
-    @PatchMapping("/{id}")
-    public ResponseEntity<CategoriaResponseDto> atualizar(@PathVariable Integer id,
+    @PatchMapping("/{categoriaId}")
+    public ResponseEntity<CategoriaResponseDto> atualizar(@PathVariable Integer categoriaId,
                                      @RequestBody @Valid CategoriaUpdateDto dto) {
 
-        return ResponseEntity.ok(categoriaService.atualizar(id, dto));
+        return ResponseEntity.ok(categoriaService.atualizar(categoriaId, dto));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
+    @DeleteMapping("/{categoriaId}")
+    public ResponseEntity<Void> deletar(@PathVariable Integer categoriaId) {
 
-        categoriaService.deletar(id);
+        categoriaService.deletar(categoriaId);
         return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA')")
     @GetMapping
     public ResponseEntity<List<CategoriaResponseDto>> listar() {
+
         return ResponseEntity.ok(categoriaService.listar());
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA')")
-    @GetMapping("/{id}")
-    public ResponseEntity<CategoriaResponseDto> buscarPorId(@PathVariable Integer id) {
-        return ResponseEntity.ok(
-                categoriaService.buscarPorId(id)
-        );
+    @GetMapping("/{categoriaId}")
+    public ResponseEntity<CategoriaResponseDto> buscarPorId(@PathVariable Integer categoriaId) {
+
+        return ResponseEntity.ok(categoriaService.buscarPorId(categoriaId));
     }
 
 }

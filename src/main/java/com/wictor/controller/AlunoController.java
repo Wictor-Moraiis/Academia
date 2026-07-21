@@ -23,26 +23,25 @@ public class  AlunoController {
     }
 
     @PostMapping(consumes = "multipart/form-data")
-    public ResponseEntity<AlunoResponseDto> cadastrar(
-            @RequestPart("dados") @Valid AlunoDto dto,
+    public ResponseEntity<AlunoResponseDto> cadastrar(@RequestPart("dados") @Valid AlunoDto dto,
             @RequestPart(value = "foto", required = false) MultipartFile foto) {
 
         return ResponseEntity.status(201).body(alunoService.cadastrar(dto, foto));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA') or #id == authentication.principal.id")
-    @PatchMapping("/{id}")
-    public ResponseEntity<AlunoResponseDto> atualizar(@PathVariable Integer id,
-                                       @RequestBody @Valid AlunoUpdateDto dto) {
+    @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA') or #alunoId == authentication.principal.alunoId")
+    @PatchMapping("/{alunoId}")
+    public ResponseEntity<AlunoResponseDto> atualizar(@PathVariable Integer alunoId,
+                                                      @RequestBody @Valid AlunoUpdateDto dto) {
 
-        return ResponseEntity.ok(alunoService.atualizar(id, dto));
+        return ResponseEntity.ok(alunoService.atualizar(alunoId, dto));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
+    @DeleteMapping("/{alunoId}")
+    public ResponseEntity<Void> deletar(@PathVariable Integer alunoId) {
 
-        alunoService.deletar(id);
+        alunoService.deletar(alunoId);
         return ResponseEntity.noContent().build();
     }
 
@@ -54,13 +53,10 @@ public class  AlunoController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','GERENTE','RECEPCIONISTA', 'PROFESSOR') or #id == authentication.principal.id")
-    @GetMapping("/{id}")
-    public ResponseEntity<AlunoResponseDto> buscarPorId(
-            @PathVariable Integer id) {
+    @GetMapping("/{alunoId}")
+    public ResponseEntity<AlunoResponseDto> buscarPorId(@PathVariable Integer alunoId) {
 
-        return ResponseEntity.ok(
-                alunoService.buscarPorId(id)
-        );
+        return ResponseEntity.ok(alunoService.buscarPorId(alunoId));
     }
 }
 

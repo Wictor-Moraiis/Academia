@@ -24,52 +24,54 @@ public class MaquinaController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     @PostMapping
-    public ResponseEntity<MaquinaResponseDto> cadastrar(
-            @RequestBody @Valid MaquinaDto dto) {
+    public ResponseEntity<MaquinaResponseDto> cadastrar(@RequestBody @Valid MaquinaDto dto) {
 
         return ResponseEntity.status(201).body(maquinaService.cadastrar(dto));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
-    @PatchMapping("/{id}")
-    public ResponseEntity<MaquinaResponseDto> atualizar(@PathVariable Integer id,
+    @PatchMapping("/{maquinaId}")
+    public ResponseEntity<MaquinaResponseDto> atualizar(@PathVariable Integer maquinaId,
                                      @RequestBody @Valid MaquinaUpdateDto dto) {
 
-        return ResponseEntity.ok(maquinaService.atualizar(id, dto));
+        return ResponseEntity.ok(maquinaService.atualizar(maquinaId, dto));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'PROFESSOR')")
-    @PatchMapping("/desativar/{id}")
-    public ResponseEntity<Map<String, String>> desativar(@PathVariable Integer id) {
+    @PatchMapping("/desativar/{maquinaId}")
+    public ResponseEntity<Map<String, String>> desativar(@PathVariable Integer maquinaId) {
 
-        maquinaService.desativar(id);
+        maquinaService.desativar(maquinaId);
         return ResponseEntity.ok(Map.of("mensagem", "Máquina desativada"));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
-    @PatchMapping("/reativar/{id}")
-    public ResponseEntity<Map<String, String>> reativar(@PathVariable Integer id) {
-        maquinaService.reativar(id);
+    @PatchMapping("/reativar/{maquinaId}")
+    public ResponseEntity<Map<String, String>> reativar(@PathVariable Integer maquinaId) {
+
+        maquinaService.reativar(maquinaId);
         return ResponseEntity.ok(Map.of("mensagem", "Máquina reativada"));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
+    @DeleteMapping("/{maquinaId}")
+    public ResponseEntity<Void> deletar(@PathVariable Integer maquinaId) {
 
-        maquinaService.deletar(id);
+        maquinaService.deletar(maquinaId);
         return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA', 'PROFESSOR', 'ALUNO')")
     @GetMapping
     public ResponseEntity<List<MaquinaResponseDto>> listar() {
+
         return ResponseEntity.ok(maquinaService.listar());
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA', 'PROFESSOR', 'ALUNO')")
-    @GetMapping("/{id}")
-    public ResponseEntity<MaquinaResponseDto> buscarPorId(@PathVariable Integer id) {
-        return ResponseEntity.ok(maquinaService.buscarPorId(id));
+    @GetMapping("/{maquinaId}")
+    public ResponseEntity<MaquinaResponseDto> buscarPorId(@PathVariable Integer maquinaId) {
+
+        return ResponseEntity.ok(maquinaService.buscarPorId(maquinaId));
     }
 }

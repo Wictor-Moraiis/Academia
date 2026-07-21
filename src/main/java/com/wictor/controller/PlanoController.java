@@ -27,40 +27,40 @@ public class PlanoController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     @PostMapping
-    public ResponseEntity<PlanoResponseDto> cadastrar(
-            @RequestBody @Valid PlanoDto dto) {
+    public ResponseEntity<PlanoResponseDto> cadastrar(@RequestBody @Valid PlanoDto dto) {
 
         return ResponseEntity.status(201).body(planoService.cadastrar(dto));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
-    @PatchMapping("/{id}")
-    public ResponseEntity<PlanoResponseDto> atualizar(@PathVariable Integer id,
+    @PatchMapping("/{planoId}")
+    public ResponseEntity<PlanoResponseDto> atualizar(@PathVariable Integer planoId,
             @RequestBody @Valid PlanoUpdateDto dto) {
 
-        return ResponseEntity.ok(planoService.atualizar(id, dto));
+        return ResponseEntity.ok(planoService.atualizar(planoId, dto));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
-    @PatchMapping("/desativar/{id}")
-    public ResponseEntity<Map<String, String>> desativar(@PathVariable Integer id) {
+    @PatchMapping("/desativar/{planoId}")
+    public ResponseEntity<Map<String, String>> desativar(@PathVariable Integer planoId) {
 
-        planoService.desativar(id);
+        planoService.desativar(planoId);
         return ResponseEntity.ok(Map.of("mensagem", "Plano desativado"));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
-    @PatchMapping("/reativar/{id}")
-    public ResponseEntity<Map<String, String>> reativar(@PathVariable Integer id) {
-        planoService.reativar(id);
+    @PatchMapping("/reativar/{planoId}")
+    public ResponseEntity<Map<String, String>> reativar(@PathVariable Integer planoId) {
+
+        planoService.reativar(planoId);
         return ResponseEntity.ok(Map.of("mensagem", "Plano reativado"));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
+    @DeleteMapping("/{planoId}")
+    public ResponseEntity<Void> deletar(@PathVariable Integer planoId) {
 
-        planoService.deletar(id);
+        planoService.deletar(planoId);
         return ResponseEntity.noContent().build();
     }
 
@@ -71,12 +71,11 @@ public class PlanoController {
         return ResponseEntity.ok(planoService.listar(user));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<PlanoResponseDto> buscarPorId(
-            @PathVariable Integer id,
+    @GetMapping("/{planoId}")
+    public ResponseEntity<PlanoResponseDto> buscarPorId(@PathVariable Integer planoId,
             @AuthenticationPrincipal CustomUserDetails user) {
 
-        return ResponseEntity.ok(planoService.buscarPorId(id, user));
+        return ResponseEntity.ok(planoService.buscarPorId(planoId, user));
     }
 
 }

@@ -32,55 +32,59 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(@RequestBody LoginDto dto) {
+
         User user = userService.autenticar(dto.cpf(), dto.senha());
         String token = jwtService.gerarToken(user);
         return ResponseEntity.ok(new LoginResponseDto(token, user.getId()));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','ALUNO','PROFESSOR','GERENTE','RECEPCIONISTA')")
-    @PatchMapping(value = "/{id}", consumes = "multipart/form-data")
-    public ResponseEntity<UserResponseDto> atualizar(@PathVariable Integer id,
+    @PatchMapping(value = "/{userId}", consumes = "multipart/form-data")
+    public ResponseEntity<UserResponseDto> atualizar(@PathVariable Integer userId,
                                                      @RequestPart("dados") @Valid UserUpdateDto dto,
                                                      @RequestPart(value = "foto", required = false) MultipartFile foto,
                                                      @AuthenticationPrincipal CustomUserDetails user) {
 
-        return ResponseEntity.ok(userService.atualizar(id, dto, foto, user.getId()));
+        return ResponseEntity.ok(userService.atualizar(userId, dto, foto, user.getId()));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','ALUNO','GERENTE')")
-    @PatchMapping("/desativar/{id}")
-    public ResponseEntity<Map<String, String>> desativar(@PathVariable Integer id,
-                                                         @AuthenticationPrincipal CustomUserDetails user){
-        userService.desativar(id, user.getId());
+    @PatchMapping("/desativar/{userId}")
+    public ResponseEntity<Map<String, String>> desativar(@PathVariable Integer userId,
+                                                         @AuthenticationPrincipal CustomUserDetails user) {
+        userService.desativar(userId, user.getId());
         return ResponseEntity.ok(Map.of("mensagem", "Usuário desativado"));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
-    @PatchMapping("/reativar/{id}")
-    public ResponseEntity<Map<String, String>> reativar(@PathVariable Integer id) {
-        userService.reativar(id);
+    @PatchMapping("/reativar/{userId}")
+    public ResponseEntity<Map<String, String>> reativar(@PathVariable Integer userId) {
+
+        userService.reativar(userId);
         return ResponseEntity.ok(Map.of("mensagem", "Usuário reativado"));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> deletar(@PathVariable Integer userId) {
 
-        userService.deletar(id);
+        userService.deletar(userId);
         return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     @GetMapping
     public ResponseEntity<List<UserResponseDto>> listar() {
+
         return ResponseEntity.ok(userService.listar());
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','ALUNO','PROFESSOR','GERENTE','RECEPCIONISTA')")
-    @GetMapping("/{id}")
-    public ResponseEntity<UserResponseDto> buscarPorId(@PathVariable Integer id,
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserResponseDto> buscarPorId(@PathVariable Integer userId,
                                                        @AuthenticationPrincipal CustomUserDetails user) {
-        return ResponseEntity.ok(userService.buscarPorId(id, user.getId()));
+
+        return ResponseEntity.ok(userService.buscarPorId(userId, user.getId()));
     }
 
 }

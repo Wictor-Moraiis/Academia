@@ -34,57 +34,54 @@ public class FinanceiroController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA')")
     @PostMapping
-    public ResponseEntity<FinanceiroResponseDto> cadastrar(
-            @RequestBody FinanceiroDto dto,
-            @AuthenticationPrincipal CustomUserDetails user){
+    public ResponseEntity<FinanceiroResponseDto> cadastrar(@RequestBody FinanceiroDto dto,
+            @AuthenticationPrincipal CustomUserDetails user) {
+
         return ResponseEntity.ok(financeiroService.cadastrar(dto, user));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA')")
     @PostMapping("/venda")
-    public ResponseEntity<VendaResponseDto> vender(
-            @RequestBody @Valid VendaDto dto,
+    public ResponseEntity<VendaResponseDto> vender(@RequestBody @Valid VendaDto dto,
             @AuthenticationPrincipal CustomUserDetails user) {
 
         return ResponseEntity.status(201).body(financeiroService.vender(dto, user));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA')")
-    @PatchMapping("/{id}")
-    public ResponseEntity<FinanceiroResponseDto> atualizar(@PathVariable Integer id,
+    @PatchMapping("/{financeiroId}")
+    public ResponseEntity<FinanceiroResponseDto> atualizar(@PathVariable Integer financeiroId,
                                                          @RequestBody @Valid FinanceiroUpdateDto dto) {
 
-        return ResponseEntity.ok(financeiroService.atualizar(id, dto));
+        return ResponseEntity.ok(financeiroService.atualizar(financeiroId, dto));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Integer id) {
+    @DeleteMapping("/{financeiroId}")
+    public ResponseEntity<Void> deletar(@PathVariable Integer financeiroId) {
 
-        financeiroService.deletar(id);
+        financeiroService.deletar(financeiroId);
         return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA')")
     @GetMapping
-    public ResponseEntity<List<FinanceiroResponseDto>> listar(
-            @AuthenticationPrincipal CustomUserDetails user) {
+    public ResponseEntity<List<FinanceiroResponseDto>> listar(@AuthenticationPrincipal CustomUserDetails user) {
+
         return ResponseEntity.ok(financeiroService.listar(user));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'RECEPCIONISTA')")
-    @GetMapping("/{id}")
-    public ResponseEntity<FinanceiroResponseDto> buscarPorId(
-            @PathVariable Integer id,
+    @GetMapping("/{financeiroId}")
+    public ResponseEntity<FinanceiroResponseDto> buscarPorId(@PathVariable Integer financeiroId,
             @AuthenticationPrincipal CustomUserDetails user) {
 
-        return ResponseEntity.ok(financeiroService.buscarPorId(id, user));
+        return ResponseEntity.ok(financeiroService.buscarPorId(financeiroId, user));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     @GetMapping("/relatorio")
-    public ResponseEntity<byte[]> gerarRelatorio(
-            @RequestParam LocalDate inicio,
+    public ResponseEntity<byte[]> gerarRelatorio(@RequestParam LocalDate inicio,
             @RequestParam LocalDate fim) {
 
         byte[] pdf = financeiroRelatorioService.gerarRelatorio(inicio, fim);
