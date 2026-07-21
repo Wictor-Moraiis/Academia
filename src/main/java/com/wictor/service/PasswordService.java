@@ -6,26 +6,29 @@ import static com.wictor.security.Settings.pepper;
 
 public class PasswordService {
 
-    public static String Criptografia(String Senha){
+    public static String Criptografia(String senha) {
 
-        String Senha_Pepper = Senha+ pepper;
+        char[] senhaPepper = (senha + pepper).toCharArray();
 
         Argon2 argon2 = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id);
 
-        int iterations = 3;
-        int memory = 65536;
-        int parallelism = 1;
-
-        return argon2.hash(iterations, memory, parallelism, Senha_Pepper);
+        try {
+            return argon2.hash(3, 65536, 1, senhaPepper);
+        } finally {
+            argon2.wipeArray(senhaPepper);
+        }
     }
 
     public static boolean verificarSenha(String senhaDigitada, String hashArmazenado) {
-        String senhaPepper = senhaDigitada + pepper;
+
+        char[] senhaPepper = (senhaDigitada + pepper).toCharArray();
+
         Argon2 argon2 = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id);
 
-        return argon2.verify(hashArmazenado, senhaPepper);
+        try {
+            return argon2.verify(hashArmazenado, senhaPepper);
+        } finally {
+            argon2.wipeArray(senhaPepper);
+        }
     }
-
-
-
 }

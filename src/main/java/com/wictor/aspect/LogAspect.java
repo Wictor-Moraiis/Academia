@@ -34,6 +34,7 @@ public class LogAspect {
         User usuario = null;
 
         if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof CustomUserDetails customUserDetails) {
+
             usuario = customUserDetails.getUser();
         }
 
@@ -58,7 +59,7 @@ public class LogAspect {
 
             return retorno;
 
-        }catch (Exception e) {
+        } catch (Exception e) {
 
             AuditoriaInfo info = AuditoriaContext.get();
 
@@ -74,10 +75,10 @@ public class LogAspect {
             );
 
             throw e;
+
         } finally {
 
             AuditoriaContext.limpar();
-
         }
     }
 
@@ -86,6 +87,7 @@ public class LogAspect {
         if (info != null) {
 
             if (info.getDescricao() != null) {
+
                 return info.getDescricao();
             }
 
@@ -93,6 +95,7 @@ public class LogAspect {
         }
 
         if (!auditar.descricao().isBlank()) {
+
             return auditar.descricao();
         }
 
@@ -102,6 +105,7 @@ public class LogAspect {
     private String obterEntidade(AuditoriaInfo info, ProceedingJoinPoint joinPoint) {
 
         if (info != null && info.getEntidade() != null) {
+
             return info.getEntidade();
         }
 
@@ -114,8 +118,7 @@ public class LogAspect {
                 entidade = entidade.substring(0, entidade.length() - 1);
             }
 
-            return Character.toUpperCase(entidade.charAt(0))
-                    + entidade.substring(1);
+            return Character.toUpperCase(entidade.charAt(0)) + entidade.substring(1);
         }
 
         return joinPoint.getTarget()
@@ -123,5 +126,4 @@ public class LogAspect {
                 .getSimpleName()
                 .replace("Service", "");
     }
-
 }
