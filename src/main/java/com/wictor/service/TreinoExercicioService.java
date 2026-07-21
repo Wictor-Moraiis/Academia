@@ -45,12 +45,11 @@ public class TreinoExercicioService {
         boolean gerente = logado.getRole() == Role.GERENTE;
         boolean professor = logado.getRole() == Role.PROFESSOR;
 
-        boolean alunoDono =
-                logado.getAluno() != null &&
-                        treino.getAluno() != null &&
+        boolean alunoDono = logado.getAluno() != null && treino.getAluno() != null &&
                         treino.getAluno().getId().equals(logado.getAluno().getId());
 
         if (!(admin || gerente || professor || alunoDono)) {
+
             throw new AccessDeniedException("Sem permissão");
         }
     }
@@ -67,7 +66,6 @@ public class TreinoExercicioService {
                 .orElseThrow(() -> new NotFoundException("Exercício não encontrado"));
 
         validarPermissao(treino, logado);
-
 
         TreinoExercicioId id = TreinoExercicioId.builder()
                 .treinoId(treino.getId())
@@ -109,25 +107,15 @@ public class TreinoExercicioService {
 
         validarPermissao(treinoExercicio.getTreino(), logado);
 
-        if (dto.ordem() != null) {
-            treinoExercicio.setOrdem(dto.ordem());
-        }
+        if (dto.ordem() != null) {treinoExercicio.setOrdem(dto.ordem());}
 
-        if (dto.carga() != null && !dto.carga().isBlank()) {
-            treinoExercicio.setCarga(dto.carga());
-        }
+        if (dto.carga() != null && !dto.carga().isBlank()) {treinoExercicio.setCarga(dto.carga());}
 
-        if (dto.series() != null && !dto.series().isBlank()) {
-            treinoExercicio.setSeries(dto.series());
-        }
+        if (dto.series() != null && !dto.series().isBlank()) {treinoExercicio.setSeries(dto.series());}
 
-        if (dto.rep() != null && !dto.rep().isBlank()) {
-            treinoExercicio.setRep(dto.rep());
-        }
+        if (dto.rep() != null && !dto.rep().isBlank()) {treinoExercicio.setRep(dto.rep());}
 
-        if (dto.obs() != null && !dto.obs().isBlank()) {
-            treinoExercicio.setObs(dto.obs());
-        }
+        if (dto.obs() != null && !dto.obs().isBlank()) {treinoExercicio.setObs(dto.obs());}
 
         AuditoriaContext.registrar(
                 AuditoriaInfo.builder()
@@ -139,26 +127,6 @@ public class TreinoExercicioService {
         );
 
         return toResponseDto(treinoexercicioRepository.save(treinoExercicio));
-    }
-
-    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de exercicios em treinos.")
-    public List<TreinoExercicioResponseDto> listar() {
-        return treinoexercicioRepository.findAll()
-                .stream()
-                .map(this::toResponseDto)
-                .toList();
-    }
-
-    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de exercicio no treino por ID.")
-    public TreinoExercicioResponseDto buscarPorId(TreinoExercicioId id, Integer userId) {
-
-        User logado = getUser(userId);
-
-        TreinoExercicio te = buscarTreinoExercicioPorId(id);
-
-        validarPermissao(te.getTreino(), logado);
-
-        return toResponseDto(te);
     }
 
     @Auditar(acao = AcaoLog.EXCLUSAO)
@@ -180,6 +148,27 @@ public class TreinoExercicioService {
         );
 
         treinoexercicioRepository.delete(treinoExercicio);
+    }
+
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de exercicios em treinos.")
+    public List<TreinoExercicioResponseDto> listar() {
+
+        return treinoexercicioRepository.findAll()
+                .stream()
+                .map(this::toResponseDto)
+                .toList();
+    }
+
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de exercicio no treino por ID.")
+    public TreinoExercicioResponseDto buscarPorId(TreinoExercicioId id, Integer userId) {
+
+        User logado = getUser(userId);
+
+        TreinoExercicio te = buscarTreinoExercicioPorId(id);
+
+        validarPermissao(te.getTreino(), logado);
+
+        return toResponseDto(te);
     }
 
     private TreinoExercicioResponseDto toResponseDto(TreinoExercicio treinoExercicio) {

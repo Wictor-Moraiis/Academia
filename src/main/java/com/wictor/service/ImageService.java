@@ -55,9 +55,7 @@ public class ImageService {
 
     public void deletarImagem(String uploadDir, String nomeArquivo) {
 
-        if (nomeArquivo == null || nomeArquivo.isBlank()) {
-            return;
-        }
+        if (nomeArquivo == null || nomeArquivo.isBlank()) {return;}
 
         try {
             Path path = Paths.get(uploadDir)

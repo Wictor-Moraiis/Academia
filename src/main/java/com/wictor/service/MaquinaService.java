@@ -53,13 +53,9 @@ public class MaquinaService {
         Maquina maquina = buscarMaquinaPorId(id);
         Maquina antes = copiarMaquina(maquina);
 
-        if (dto.nome() != null && !dto.nome().isBlank()) {
-            maquina.setNome(dto.nome());
-        }
+        if (dto.nome() != null && !dto.nome().isBlank()) {maquina.setNome(dto.nome());}
 
-        if (dto.ativa() != null) {
-            maquina.setAtiva(dto.ativa());
-        }
+        if (dto.ativa() != null) {maquina.setAtiva(dto.ativa());}
 
         AuditoriaContext.registrar(
                 AuditoriaInfo.builder()
@@ -71,19 +67,6 @@ public class MaquinaService {
         );
 
         return toResponseDto(maquinaRepository.save(maquina));
-    }
-
-    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de maquinas.")
-    public List<MaquinaResponseDto> listar() {
-        return maquinaRepository.findAll()
-                .stream()
-                .map(this::toResponseDto)
-                .toList();
-    }
-
-    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de maquina por ID.")
-    public MaquinaResponseDto buscarPorId(Integer id) {
-        return toResponseDto(buscarMaquinaPorId(id));
     }
 
     @Auditar(acao = AcaoLog.ALTERACAO)
@@ -143,17 +126,31 @@ public class MaquinaService {
         maquinaRepository.delete(maquina);
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de maquinas.")
+    public List<MaquinaResponseDto> listar() {
+        return maquinaRepository.findAll()
+                .stream()
+                .map(this::toResponseDto)
+                .toList();
+    }
+
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de maquina por ID.")
+    public MaquinaResponseDto buscarPorId(Integer id) {
+
+        return toResponseDto(buscarMaquinaPorId(id));
+    }
+
+    private Maquina buscarMaquinaPorId(Integer id) {
+        return maquinaRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Máquina não encontrada"));
+    }
+
     private MaquinaResponseDto toResponseDto(Maquina maquina) {
         return new MaquinaResponseDto(
                 maquina.getId(),
                 maquina.getNome(),
                 maquina.isAtiva()
         );
-    }
-
-    private Maquina buscarMaquinaPorId(Integer id) {
-        return maquinaRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Máquina não encontrada"));
     }
 
     private Maquina copiarMaquina(Maquina maquina) {

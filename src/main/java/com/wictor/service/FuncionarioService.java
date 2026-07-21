@@ -10,7 +10,6 @@ import com.wictor.dto.user.UserResponseDto;
 import com.wictor.enums.AcaoLog;
 import com.wictor.enums.Role;
 import com.wictor.exception.*;
-import com.wictor.model.Aluno;
 import com.wictor.model.Categoria;
 import com.wictor.model.Funcionario;
 import com.wictor.model.User;
@@ -47,9 +46,7 @@ public class FuncionarioService {
 
         User user = userService.cadastrar(dto.user(), foto, role);
 
-        if (dto.cref() != null && !dto.cref().isBlank()) {
-            validarFuncionarioPorCref(dto.cref());
-        }
+        if (dto.cref() != null && !dto.cref().isBlank()) {validarFuncionarioPorCref(dto.cref());}
 
         if (dto.turnoIni() == null || dto.turnoFim() == null ||
                 dto.turnoFim().isBefore(dto.turnoIni())) {
@@ -89,48 +86,37 @@ public class FuncionarioService {
         Funcionario funcionario = buscarFuncionarioPorId(id);
         Funcionario antes = copiarFuncionario(funcionario);
 
-        if (!funcionario.getUser().isAtivo()) {
-            throw new RegraException("Usuário desativado");
-        }
+        if (!funcionario.getUser().isAtivo()) {throw new RegraException("Usuário desativado");}
 
         if (dto.cref() != null && !dto.cref().isBlank()) {
+
             if (!dto.cref().equals(funcionario.getCref())) {
+
                 validarFuncionarioPorCref(dto.cref());
             }
             funcionario.setCref(dto.cref());
         }
 
-        if (dto.tipoContrato() != null) {
-            funcionario.setTipoContrato(dto.tipoContrato());
-        }
+        if (dto.tipoContrato() != null) {funcionario.setTipoContrato(dto.tipoContrato());}
 
         LocalTime turnoIni = dto.turnoIni() != null ? dto.turnoIni() : funcionario.getTurnoIni();
         LocalTime turnoFim = dto.turnoFim() != null ? dto.turnoFim() : funcionario.getTurnoFim();
 
-        if (turnoFim.isBefore(turnoIni)) {
-            throw new RegraException("Turno inválido");
-        }
+        if (turnoFim.isBefore(turnoIni)) {throw new RegraException("Turno inválido");}
 
         funcionario.setTurnoIni(turnoIni);
         funcionario.setTurnoFim(turnoFim);
 
-        if (dto.banco() != null && !dto.banco().isBlank()) {
-            funcionario.setBanco(dto.banco());
-        }
+        if (dto.banco() != null && !dto.banco().isBlank()) {funcionario.setBanco(dto.banco());}
 
-        if (dto.agencia() != null && !dto.agencia().isBlank()) {
-            funcionario.setAgencia(dto.agencia());
-        }
+        if (dto.agencia() != null && !dto.agencia().isBlank()) {funcionario.setAgencia(dto.agencia());}
 
-        if (dto.conta() != null && !dto.conta().isBlank()) {
-            funcionario.setConta(dto.conta());
-        }
+        if (dto.conta() != null && !dto.conta().isBlank()) {funcionario.setConta(dto.conta());}
 
-        if (dto.tipoConta() != null && !dto.tipoConta().isBlank()) {
-            funcionario.setTipoConta(dto.tipoConta());
-        }
+        if (dto.tipoConta() != null && !dto.tipoConta().isBlank()) {funcionario.setTipoConta(dto.tipoConta());}
 
         if (dto.categoriaId() != null) {
+
             Categoria categoria = buscarCategoriaPorId(dto.categoriaId());
 
             funcionario.setCategoria(categoria);
@@ -184,17 +170,21 @@ public class FuncionarioService {
     }
 
     private Funcionario buscarFuncionarioPorId(Integer id) {
+
         return funcionarioRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Funcionario não encontrado"));
     }
 
     private void validarFuncionarioPorCref(String cref) {
+
         if (funcionarioRepository.existsByCref(cref)) {
+
             throw new ConflitoException("Cref já cadastrado");
         }
     }
 
     private Categoria buscarCategoriaPorId(Integer id) {
+
         return categoriaRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Categoria não encontrada"));
     }

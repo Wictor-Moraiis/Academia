@@ -7,6 +7,7 @@ import java.util.Base64;
 import static com.wictor.security.Settings.getKey;
 
 public class CpfService {
+
     public static String Criptografia(String Cpf) {
 
         try {
@@ -25,7 +26,6 @@ public class CpfService {
 
             throw new RuntimeException(e);
         }
-
     }
 
     public static String Descriptografia(String Cpf_cripto) {
@@ -47,6 +47,5 @@ public class CpfService {
             throw new RuntimeException(e);
         }
     }
-
 }
 

@@ -53,17 +53,11 @@ public class CategoriaService {
         Categoria categoria = buscarCategoriaPorId(id);
         Categoria categoriaAntes = copiarCategoria(categoria);
 
-        if (dto.nome() != null && !dto.nome().isBlank()) {
-            categoria.setNome(dto.nome());
-        }
+        if (dto.nome() != null && !dto.nome().isBlank()) {categoria.setNome(dto.nome());}
 
-        if (dto.salario() != null) {
-            categoria.setSalario(dto.salario());
-        }
+        if (dto.salario() != null) {categoria.setSalario(dto.salario());}
 
-        if (dto.role() != null) {
-            categoria.setRole(dto.role());
-        }
+        if (dto.role() != null) {categoria.setRole(dto.role());}
 
         Categoria categoriaSalva = categoriaRepository.save(categoria);
 
@@ -77,35 +71,6 @@ public class CategoriaService {
         );
 
         return toResponseDto(categoria);
-    }
-
-    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de categorias.")
-    public List<CategoriaResponseDto> listar() {
-
-        return categoriaRepository.findAll()
-                .stream()
-                .map(this::toResponseDto)
-                .toList();
-    }
-
-    private CategoriaResponseDto toResponseDto(Categoria categoria) {
-        return new CategoriaResponseDto(
-               categoria.getId(),
-                categoria.getNome(),
-                categoria.getSalario(),
-                categoria.getRole()
-        );
-    }
-
-    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de categoria por ID.")
-    public CategoriaResponseDto buscarPorId(Integer id) {
-
-        return toResponseDto(buscarCategoriaPorId(id));
-    }
-
-    private Categoria buscarCategoriaPorId(Integer id) {
-        return categoriaRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Categoria não encontrada"));
     }
 
     @Auditar(acao = AcaoLog.EXCLUSAO)
@@ -123,6 +88,36 @@ public class CategoriaService {
         );
 
         categoriaRepository.delete(categoria);
+    }
+
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de categorias.")
+    public List<CategoriaResponseDto> listar() {
+
+        return categoriaRepository.findAll()
+                .stream()
+                .map(this::toResponseDto)
+                .toList();
+    }
+
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de categoria por ID.")
+    public CategoriaResponseDto buscarPorId(Integer id) {
+
+        return toResponseDto(buscarCategoriaPorId(id));
+    }
+
+    private Categoria buscarCategoriaPorId(Integer id) {
+        return categoriaRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Categoria não encontrada"));
+    }
+
+    private CategoriaResponseDto toResponseDto(Categoria categoria) {
+
+        return new CategoriaResponseDto(
+                categoria.getId(),
+                categoria.getNome(),
+                categoria.getSalario(),
+                categoria.getRole()
+        );
     }
 
     private Categoria copiarCategoria(Categoria categoria) {

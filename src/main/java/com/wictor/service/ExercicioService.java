@@ -67,6 +67,7 @@ public class ExercicioService {
                         .entidadeId(savedExercicio.getId())
                         .build()
         );
+
         return toResponseDto(savedExercicio);
     }
 
@@ -77,13 +78,9 @@ public class ExercicioService {
         Exercicio exercicio = buscarExercicioPorId(id);
         Exercicio exercicioAntes = copiarExercicio(exercicio);
 
-        if (dto.nome() != null && !dto.nome().isBlank()) {
-            exercicio.setNome(dto.nome());
-        }
+        if (dto.nome() != null && !dto.nome().isBlank()) {exercicio.setNome(dto.nome());}
 
-        if (dto.obs() != null && !dto.obs().isBlank()) {
-            exercicio.setObs(dto.obs());
-        }
+        if (dto.obs() != null && !dto.obs().isBlank()) {exercicio.setObs(dto.obs());}
 
         if (dto.maquinaId() != null) {
             Maquina maquina = maquinaRepository.findById(dto.maquinaId())
@@ -95,7 +92,6 @@ public class ExercicioService {
 
         Exercicio exercicioSalvo = exercicioRepository.save(exercicio);
 
-
         AuditoriaContext.registrar(
                 AuditoriaInfo.builder()
                         .antes(exercicioAntes)
@@ -106,6 +102,24 @@ public class ExercicioService {
         );
 
         return toResponseDto(exercicio);
+    }
+
+    @Auditar(acao = AcaoLog.EXCLUSAO)
+    @Transactional
+    public void deletar(Integer id) {
+
+        Exercicio exercicio = buscarExercicioPorId(id);
+
+        AuditoriaContext.registrar(
+                AuditoriaInfo.builder()
+                        .antes(exercicio)
+                        .entidade("Exercicio")
+                        .entidadeId(exercicio.getId())
+                        .build()
+        );
+
+        imageService.deletarImagem(uploadDir, exercicio.getFoto());
+        exercicioRepository.delete(exercicio);
     }
 
     @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de exercicios.")
@@ -137,24 +151,6 @@ public class ExercicioService {
                         ? exercicio.getMaquina().getNome()
                         : null
         );
-    }
-
-    @Auditar(acao = AcaoLog.EXCLUSAO)
-    @Transactional
-    public void deletar(Integer id) {
-
-        Exercicio exercicio = buscarExercicioPorId(id);
-
-        AuditoriaContext.registrar(
-                AuditoriaInfo.builder()
-                        .antes(exercicio)
-                        .entidade("Exercicio")
-                        .entidadeId(exercicio.getId())
-                        .build()
-        );
-
-        imageService.deletarImagem(uploadDir, exercicio.getFoto());
-        exercicioRepository.delete(exercicio);
     }
 
     private void atualizarFoto(Exercicio exercicio, MultipartFile foto) {

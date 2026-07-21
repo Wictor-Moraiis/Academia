@@ -48,20 +48,27 @@ public class TreinoService {
         Boolean ativo;
 
         if (treinoDTO.criado() == null) {
+
             criado = LocalDate.now();
         } else {
+
             criado = treinoDTO.criado();
         }
         if (treinoDTO.modificado() == null) {
+
             modificado = criado;
         } else {
+
             modificado = treinoDTO.modificado();
         }
         if (treinoDTO.ativo() == null) {
+
             ativo = true;
         } else {
+
             ativo = treinoDTO.ativo();
         }
+
         Treino treino = treinoRepository.save(
                 Treino.builder()
                         .nome(treinoDTO.nome())
@@ -85,7 +92,6 @@ public class TreinoService {
         );
 
         return toResponseDto(treino);
-
     }
 
     @Auditar(acao = AcaoLog.ALTERACAO)
@@ -98,50 +104,54 @@ public class TreinoService {
         validarPermissao(treino, userId);
 
         if (dto.nome() != null && !dto.nome().isBlank()) {
+
             treino.setNome(dto.nome());
             alterado = true;
         }
 
         if (dto.ObjTreino() != null) {
+
             treino.setObjTreino(dto.ObjTreino());
             alterado = true;
         }
 
         if (dto.inicio() != null && !dto.inicio().equals(treino.getInicio())) {
+
             treino.setInicio(dto.inicio());
             alterado = true;
         }
 
         if (dto.fim() != null && !dto.fim().equals(treino.getFim())) {
+
             treino.setFim(dto.fim());
             alterado = true;
         }
 
         if (dto.criado() != null && !dto.criado().equals(treino.getCriado())) {
+
             treino.setCriado(dto.criado());
             alterado = true;
         }
 
         if (dto.modificado() != null && !dto.modificado().equals(treino.getModificado())) {
+
             treino.setModificado(dto.modificado());
             alterado = true;
         }
 
         if (dto.obs() != null && !dto.obs().isBlank()) {
+
             treino.setObs(dto.obs());
             alterado = true;
         }
 
-        if (dto.ativo() != null &&
-                !dto.ativo().equals(treino.isAtivo())) {
+        if (dto.ativo() != null && !dto.ativo().equals(treino.isAtivo())) {
 
             treino.setAtivo(dto.ativo());
             alterado = true;
         }
 
-        if (alterado) {
-            treino.setModificado(LocalDate.now());
-        }
+        if (alterado) {treino.setModificado(LocalDate.now());}
 
         AuditoriaContext.registrar(
                 AuditoriaInfo.builder()
@@ -153,31 +163,6 @@ public class TreinoService {
         );
 
         return toResponseDto(treinoRepository.save(treino));
-    }
-
-    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de treinos.")
-    public List<TreinoResponseDto> listar() {
-        return treinoRepository.findAll()
-                .stream()
-                .map(this::toResponseDto)
-                .toList();
-    }
-
-    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de treino por ID.")
-    public TreinoResponseDto buscarPorId(Integer id, Integer userId) {
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
-
-        Treino treino = buscarTreinoPorId(id);
-
-        if (user.getRole() == Role.ALUNO &&
-                !treino.getAluno().getUser().getId().equals(userId)) {
-
-            throw new AccessDeniedException("Você não tem permissão para acessar este treino.");
-        }
-
-        return toResponseDto(treino);
     }
 
     @Auditar(acao = AcaoLog.ALTERACAO)
@@ -238,6 +223,32 @@ public class TreinoService {
         treinoRepository.delete(treino);
     }
 
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Listagem de treinos.")
+    public List<TreinoResponseDto> listar() {
+
+        return treinoRepository.findAll()
+                .stream()
+                .map(this::toResponseDto)
+                .toList();
+    }
+
+    @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de treino por ID.")
+    public TreinoResponseDto buscarPorId(Integer id, Integer userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
+
+        Treino treino = buscarTreinoPorId(id);
+
+        if (user.getRole() == Role.ALUNO &&
+                !treino.getAluno().getUser().getId().equals(userId)) {
+
+            throw new AccessDeniedException("Você não tem permissão para acessar este treino.");
+        }
+
+        return toResponseDto(treino);
+    }
+
     private TreinoResponseDto toResponseDto(Treino treino) {
         return new TreinoResponseDto(
                 treino.getId(),
@@ -253,8 +264,8 @@ public class TreinoService {
     }
 
     private Treino buscarTreinoPorId(Integer id) {
-        return treinoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Treino não encontrado"));
+
+        return treinoRepository.findById(id).orElseThrow(() -> new NotFoundException("Treino não encontrado"));
     }
 
     private void validarPermissao(Treino treino, Integer userId) {
@@ -267,9 +278,7 @@ public class TreinoService {
         boolean dono = treino.getAluno() != null &&
                 treino.getAluno().getUser().getId().equals(userId);
 
-        if (!admin && !dono) {
-            throw new AccessDeniedException("Sem permissão");
-        }
+        if (!admin && !dono) {throw new AccessDeniedException("Sem permissão");}
     }
 
     private Aluno obterAluno(TreinoDto dto, Integer userId) {
@@ -280,8 +289,8 @@ public class TreinoService {
         boolean admin = logado.getRole().name().equals("ADMIN");
 
         if (admin && dto.alunoId() != null) {
-            return alunoRepository.findById(dto.alunoId())
-                    .orElseThrow(() -> new NotFoundException("Aluno não encontrado"));
+
+            return alunoRepository.findById(dto.alunoId()).orElseThrow(() -> new NotFoundException("Aluno não encontrado"));
         }
 
         return logado.getAluno();

@@ -46,9 +46,7 @@ public class UserService {
 
         String cpf = userDTO.cpf();
 
-        if (!CpfValidator.validar(cpf)) {
-            throw new RegraException("CPF inválido");
-        }
+        if (!CpfValidator.validar(cpf)) {throw new RegraException("CPF inválido");}
 
         if (!AgeValidator.validar(userDTO.datanasc())) {
             throw new ConflitoException("Data de nascimento inválida");
@@ -95,18 +93,17 @@ public class UserService {
         User user = userRepository.findByCpf(cpfCript).orElse(null);
 
         if (user == null) {
+
             registrarTentativaLogin(null, false);
             throw new RegraException("CPF ou senha inválidos");
         }
 
         validarAtivo(user);
 
-        boolean senhaValida = PasswordService.verificarSenha(
-                senhaDigitada,
-                user.getSenha()
-        );
+        boolean senhaValida = PasswordService.verificarSenha(senhaDigitada, user.getSenha());
 
         if (!senhaValida) {
+
             registrarTentativaLogin(user, false);
             throw new RegraException("CPF ou senha inválidos");
         }
@@ -157,48 +154,38 @@ public class UserService {
         }
 
         if (dto.senha() != null && !dto.senha().isBlank()) {
+
             user.setSenha(PasswordService.Criptografia(dto.senha()));
         }
 
-        if (dto.nome() != null && !dto.nome().isBlank()) {
-            user.setNome(dto.nome());
-        }
+        if (dto.nome() != null && !dto.nome().isBlank()) {user.setNome(dto.nome());}
 
-        if (dto.email2() != null && !dto.email2().isBlank()) {
-            user.setEmail2(dto.email2());
-        }
+        if (dto.email2() != null && !dto.email2().isBlank()) {user.setEmail2(dto.email2());}
 
         if (dto.tel2() != null && !dto.tel2().isBlank()) {
+
             user.setTel2(NumberValidator.limpar(dto.tel2()));
         }
 
-        if (dto.sexo() != null) {
-            user.setSexo(dto.sexo());
-        }
+        if (dto.sexo() != null) {user.setSexo(dto.sexo());}
 
         if (dto.cep() != null && !dto.cep().isBlank()) {
+
             user.setCep(dto.cep().replaceAll("[^0-9]", ""));
         }
 
-        if (dto.bairro() != null && !dto.bairro().isBlank()) {
-            user.setBairro(dto.bairro());
-        }
+        if (dto.bairro() != null && !dto.bairro().isBlank()) {user.setBairro(dto.bairro());}
 
-        if (dto.rua() != null && !dto.rua().isBlank()) {
-            user.setRua(dto.rua());
-        }
+        if (dto.rua() != null && !dto.rua().isBlank()) {user.setRua(dto.rua());}
 
-        if (dto.numeroCasa() != null) {
-            user.setNumeroCasa(dto.numeroCasa());
-        }
+        if (dto.numeroCasa() != null) {user.setNumeroCasa(dto.numeroCasa());}
 
-        if (dto.comp() != null && !dto.comp().isBlank()) {
-            user.setComp(dto.comp());
-        }
+        if (dto.comp() != null && !dto.comp().isBlank()) {user.setComp(dto.comp());}
 
         if (dto.datanasc() != null) {
 
             if (!AgeValidator.validar(dto.datanasc())) {
+
                 throw new ConflitoException("Data de nascimento inválida");
             }
 
@@ -302,8 +289,8 @@ public class UserService {
     }
 
     private User buscarUserPorId(Integer id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
+
+        return userRepository.findById(id).orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
     }
 
     private UserResponseDto toResponseDto(User user) {
@@ -346,20 +333,25 @@ public class UserService {
     private void validarAtivo(User user) {
 
         if (!user.isAtivo()) {
+
             throw new RegraException("Usuário desativado");
         }
     }
 
     private void validarDadosCadastro(String cpfCript, String email, String tel) {
+
         if (cpfCript != null && userRepository.existsByCpf(cpfCript)) {
+
             throw new ConflitoException("CPF já cadastrado");
         }
 
         if (email != null && userRepository.existsByEmail1(email)) {
+
             throw new ConflitoException("Email já cadastrado");
         }
 
         if (tel != null && userRepository.existsByTel1(tel)) {
+
             throw new ConflitoException("Telefone já cadastrado");
         }
     }
@@ -367,35 +359,38 @@ public class UserService {
     private void validarDados(Integer id, String cpfCript, String email, String tel) {
 
         if (cpfCript != null && userRepository.existsByCpfAndIdNot(cpfCript, id)) {
+
             throw new ConflitoException("CPF já cadastrado");
         }
 
         if (email != null && userRepository.existsByEmail1AndIdNot(email, id)) {
+
             throw new ConflitoException("Email já cadastrado");
         }
 
         if (tel != null && userRepository.existsByTel1AndIdNot(tel, id)) {
+
             throw new ConflitoException("Telefone já cadastrado");
         }
     }
 
     private void validarPermissao(User alvo, User logado) {
 
-        boolean adminOuGerente =
-                logado.getRole() == Role.ADMIN ||
-                        logado.getRole() == Role.GERENTE;
+        boolean adminOuGerente = logado.getRole() == Role.ADMIN || logado.getRole() == Role.GERENTE;
 
         boolean mesmoUsuario = alvo.getId().equals(logado.getId());
 
-        boolean alvoEhFuncionario =
-                alvo.getRole() != Role.ALUNO;
+        boolean alvoEhFuncionario = alvo.getRole() != Role.ALUNO;
 
         if (alvoEhFuncionario) {
+
             if (!adminOuGerente) {
+
                 throw new AccessDeniedException("Apenas ADMIN ou GERENTE podem acessar funcionários");
             }
         } else {
             if (!mesmoUsuario && !adminOuGerente) {
+
                 throw new AccessDeniedException("Aluno só pode acessar sua própria conta");
             }
         }
@@ -426,6 +421,7 @@ public class UserService {
     }
 
     private void registrarTentativaLogin(User user, boolean sucesso) {
+
         logService.registrar(new LogDto(
                 user,
                 AcaoLog.LOGIN,
@@ -435,5 +431,4 @@ public class UserService {
                 sucesso
         ));
     }
-
 }
