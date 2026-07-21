@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -47,14 +48,14 @@ public class AlunoService {
         User user = userService.cadastrar(dto.user(), foto, Role.ALUNO);
 
         if (alunoRepository.existsByUserId(user.getId())) {
+
             throw new ConflitoException("Usuário já é um aluno");
         }
 
         if (funcionarioRepository.existsByUserId(user.getId())) {
+
             throw new RegraException("Usuário já é um funcionário");
         }
-
-        Plano plano = buscarPlanoPorId(dto.planoId());
 
         Aluno aluno = Aluno.builder()
                 .user(user)
@@ -63,9 +64,9 @@ public class AlunoService {
                 .altura(dto.altura())
                 .peso(dto.peso())
                 .objetivo(dto.objetivo())
-                .plano(plano)
-                .vencimento(dto.vencimento())
-                .vencido(dto.vencido())
+                .plano(null)
+                .vencimento(LocalDate.now())
+                .vencido(true)
                 .build();
 
         alunoRepository.save(aluno);
@@ -88,42 +89,27 @@ public class AlunoService {
         Aluno aluno = buscarAlunoPorId(id);
         Aluno antes = copiarAluno(aluno);
 
-        if (!aluno.getUser().isAtivo()) {
-            throw new RegraException("Usuário desativado");
-        }
+        if (!aluno.getUser().isAtivo()) {throw new RegraException("Usuário desativado");}
 
-        if (dto.saude() != null && !dto.saude().isBlank()) {
-            aluno.setSaude(dto.saude());
-        }
+        if (dto.saude() != null && !dto.saude().isBlank()) {aluno.setSaude(dto.saude());}
 
-        if (dto.obs() != null && !dto.obs().isBlank()) {
-            aluno.setObs(dto.obs());
-        }
+        if (dto.obs() != null && !dto.obs().isBlank()) {aluno.setObs(dto.obs());}
 
-        if (dto.altura() != null) {
-            aluno.setAltura(dto.altura());
-        }
+        if (dto.altura() != null) {aluno.setAltura(dto.altura());}
 
-        if (dto.peso() != null) {
-            aluno.setPeso(dto.peso());
-        }
+        if (dto.peso() != null) {aluno.setPeso(dto.peso());}
 
-        if (dto.objetivo() != null && !dto.objetivo().isBlank()) {
-            aluno.setObjetivo(dto.objetivo());
-        }
+        if (dto.objetivo() != null) {aluno.setObjetivo(dto.objetivo());}
 
         if (dto.planoId() != null) {
+
             Plano plano = buscarPlanoPorId(dto.planoId());
             aluno.setPlano(plano);
         }
 
-        if (dto.vencimento() != null) {
-            aluno.setVencimento(dto.vencimento());
-        }
+        if (dto.vencimento() != null) {aluno.setVencimento(dto.vencimento());}
 
-        if (dto.vencido() != null) {
-            aluno.setVencido(dto.vencido());
-        }
+        if (dto.vencido() != null) {aluno.setVencido(dto.vencido());}
 
         alunoRepository.save(aluno);
 
@@ -158,8 +144,7 @@ public class AlunoService {
     @Auditar(acao = AcaoLog.CONSULTA, descricao = "Consulta de Aluno por ID.")
     public AlunoResponseDto buscarPorId(Integer id) {
 
-        Aluno aluno = alunoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Aluno não encontrado"));
+        Aluno aluno = alunoRepository.findById(id).orElseThrow(() -> new NotFoundException("Aluno não encontrado"));
 
         return toResponseDto(aluno);
     }
@@ -173,17 +158,45 @@ public class AlunoService {
                 .toList();
     }
 
+    @Transactional
+    public void ativarPlano(Aluno aluno, Plano plano) {
+
+        LocalDate inicio;
+
+        aluno.setAssinaturaAtiva(plano.isRecorrente());
+
+        if (aluno.getVencimento() != null
+                && !aluno.isVencido()
+                && aluno.getPlano().equals(plano)) {
+
+            inicio = aluno.getVencimento();
+
+        } else {
+
+            inicio = LocalDate.now();
+        }
+
+        aluno.setPlano(plano);
+
+        aluno.setVencimento(plano.getCiclo().calcularVencimento(inicio));
+
+        aluno.setVencido(false);
+
+        alunoRepository.save(aluno);
+    }
+
     private Aluno buscarAlunoPorId(Integer id) {
-        return alunoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Aluno não encontrado"));
+
+        return alunoRepository.findById(id).orElseThrow(() -> new NotFoundException("Aluno não encontrado"));
     }
 
     private Plano buscarPlanoPorId(Integer id) {
-        return planoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Plano não encontrado"));
+
+        return planoRepository.findById(id).orElseThrow(() -> new NotFoundException("Plano não encontrado"));
     }
 
     private AlunoResponseDto toResponseDto(Aluno aluno) {
+
         return new AlunoResponseDto(
                 new UserResponseDto(
                         aluno.getUser().getId(),
@@ -204,7 +217,7 @@ public class AlunoService {
                 aluno.getAltura(),
                 aluno.getPeso(),
                 aluno.getObjetivo(),
-                aluno.getPlano().getNome(),
+                aluno.getPlano() != null ? aluno.getPlano().getNome() : null,
                 aluno.getVencimento(),
                 aluno.isVencido()
         );

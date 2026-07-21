@@ -1,8 +1,10 @@
 package com.wictor.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.wictor.enums.ObjetivoTreino;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -37,11 +39,12 @@ public class Aluno {
     @Column(name = "Aluno_peso", nullable = false)
     private BigDecimal peso;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "Aluno_obj", nullable = false)
-    private String objetivo;
+    private ObjetivoTreino objetivo;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "Aluno_plano", nullable = false)
+    @JoinColumn(name = "Aluno_plano")
     private Plano plano;
 
     @Column(name = "Aluno_vencimento", nullable = false)
@@ -50,4 +53,9 @@ public class Aluno {
     @Column(name = "Aluno_plano_vencido", nullable = false)
     private boolean vencido;
 
+    @Column(name = "Aluno_abacate_customer_id")
+    private String abacateCustomerId;
+
+    @Column(name = "Aluno_assinatura_ativa")
+    private Boolean assinaturaAtiva;
 }
