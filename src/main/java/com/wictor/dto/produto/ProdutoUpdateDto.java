@@ -19,5 +19,4 @@ public record ProdutoUpdateDto(
 
         @PositiveOrZero(message = "Quantidade mínima não pode ser negativa")
         Integer qtd_min
-
 ){}

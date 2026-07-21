@@ -6,13 +6,20 @@ import java.time.LocalTime;
 public record FuncionarioUpdateDto(
 
         String cref,
+
         TipoContrato tipoContrato,
+
         LocalTime turnoIni,
+
         LocalTime turnoFim,
+
         String banco,
+
         String agencia,
+
         String conta,
+
         String tipoConta,
+
         Integer categoriaId
-) {
-}
+){}

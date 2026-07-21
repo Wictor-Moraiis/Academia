@@ -5,6 +5,7 @@ import com.wictor.enums.ObjetivoTreino;
 import java.time.LocalDate;
 
 public record TreinoResponseDto(
+
         Integer id,
         String nome,
         ObjetivoTreino ObjTreino,
@@ -14,5 +15,4 @@ public record TreinoResponseDto(
         LocalDate modificado,
         Boolean ativo,
         String alunoNome
-) {
-}
+){}

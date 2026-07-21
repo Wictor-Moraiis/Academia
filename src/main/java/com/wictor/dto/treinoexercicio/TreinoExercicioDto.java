@@ -26,4 +26,4 @@ public record TreinoExercicioDto(
         String rep,
 
         String obs
-) {}
+){}

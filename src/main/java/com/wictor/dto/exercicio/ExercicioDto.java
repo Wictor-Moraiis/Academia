@@ -10,5 +10,4 @@ public record ExercicioDto(
         String obs,
 
         Integer maquinaId
-) {
-}
+){}

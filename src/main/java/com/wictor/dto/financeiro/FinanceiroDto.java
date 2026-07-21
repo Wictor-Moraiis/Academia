@@ -19,4 +19,4 @@ public record FinanceiroDto(
 
         @NotNull(message = "Valor da atividade financeira é obrigatório")
         BigDecimal valor
-) {}
+){}

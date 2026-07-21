@@ -8,7 +8,10 @@ import java.time.LocalDate;
 public record FinanceiroUpdateDto(
 
         String nome,
+
         TipoFinanceiro tipo,
+
         LocalDate data,
+
         BigDecimal valor
-) {}
+){}

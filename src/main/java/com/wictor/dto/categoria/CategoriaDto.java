@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
 
-public record CategoriaDto (
+public record CategoriaDto(
 
     @NotBlank(message = "Nome da categoria é obrigatório")
     String nome,
@@ -17,4 +17,4 @@ public record CategoriaDto (
     BigDecimal salario,
 
     Role role
-) {}
+){}

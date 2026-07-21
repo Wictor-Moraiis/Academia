@@ -5,7 +5,8 @@ import com.wictor.enums.Sexo;
 
 import java.time.LocalDate;
 
-public record UserResponseDto (
+public record UserResponseDto(
+
         Integer id,
         String nome,
         String email1,

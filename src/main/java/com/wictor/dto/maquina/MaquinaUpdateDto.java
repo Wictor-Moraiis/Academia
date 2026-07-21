@@ -1,6 +1,8 @@
 package com.wictor.dto.maquina;
 
-public record MaquinaUpdateDto (
+public record MaquinaUpdateDto(
+
         String nome,
+
         Boolean ativa
-) {}
+){}

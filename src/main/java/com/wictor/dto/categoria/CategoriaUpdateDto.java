@@ -13,4 +13,4 @@ public record CategoriaUpdateDto(
     BigDecimal salario,
 
     Role role
-) {}
+){}

@@ -18,4 +18,4 @@ public record LogDto(
         String descricao,
 
         Boolean sucesso
-) {}
+){}

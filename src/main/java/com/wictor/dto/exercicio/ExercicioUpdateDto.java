@@ -7,4 +7,4 @@ public record ExercicioUpdateDto(
         String obs,
 
         Integer maquinaId
-) {}
+){}

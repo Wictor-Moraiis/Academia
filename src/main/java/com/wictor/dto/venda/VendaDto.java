@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
-public record VendaDto (
+public record VendaDto(
 
         @NotNull(message = "Itens da venda são obrigatórios")
         @Size(min = 1, message = "A venda deve ter pelo menos 1 item")
