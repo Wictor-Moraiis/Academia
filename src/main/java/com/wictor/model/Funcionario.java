@@ -1,6 +1,7 @@
 package com.wictor.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.wictor.enums.TipoContaBancaria;
 import com.wictor.enums.TipoContrato;
 import jakarta.persistence.*;
 import lombok.*;
@@ -48,8 +49,9 @@ public class Funcionario {
     @Column(name = "Func_conta", nullable = false)
     private String conta;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "Func_tipo_conta", nullable = false)
-    private String tipoConta;
+    private TipoContaBancaria tipoConta;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "Catg_id", nullable = false)

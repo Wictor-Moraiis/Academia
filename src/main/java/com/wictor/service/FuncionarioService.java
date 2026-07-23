@@ -113,7 +113,7 @@ public class FuncionarioService {
 
         if (dto.conta() != null && !dto.conta().isBlank()) {funcionario.setConta(dto.conta());}
 
-        if (dto.tipoConta() != null && !dto.tipoConta().isBlank()) {funcionario.setTipoConta(dto.tipoConta());}
+        if (dto.tipoConta() != null) {funcionario.setTipoConta(dto.tipoConta());}
 
         if (dto.categoriaId() != null) {
 
