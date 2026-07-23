@@ -1,5 +1,6 @@
 package com.wictor.exception;
 
+import com.wictor.dto.erro.ErrorResponseDto;
 import com.wictor.dto.log.LogDto;
 import com.wictor.enums.AcaoLog;
 import com.wictor.model.User;
@@ -106,9 +107,9 @@ public class GlobalExceptionHandler {
         return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno do servidor.");
     }
 
-    private ResponseEntity<Map<String, String>> erro(HttpStatus status, String mensagem) {
+    private ResponseEntity<ErrorResponseDto> erro(HttpStatus status, String mensagem) {
 
-        return ResponseEntity.status(status).body(Map.of("erro", mensagem));
+        return ResponseEntity.status(status).body(new ErrorResponseDto(mensagem));
     }
 
     private String extrairEntidade(String uri) {
